@@ -1,0 +1,5 @@
+defaults:
+  - dataset: applewatch
+  
+datasets_dir: ${hydra:runtime.cwd}/data/raw
+task: download
