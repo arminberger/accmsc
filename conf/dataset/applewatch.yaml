@@ -1,6 +1,7 @@
 name: applewatch
 url: https://physionet.org/files/sleep-accel/1.0.0/
 is_zipped: false
+is_sleep_staging: true
 sampling_rate: 50
 unpacked_path: applewatch/physionet.org/files/sleep-accel/1.0.0
 labels:
