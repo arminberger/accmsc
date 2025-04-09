@@ -5,3 +5,5 @@ defaults:
 datasets_dir: ${hydra:runtime.cwd}/data/raw
 task: download
 lowpass_cutoff_frequency: 20
+window_length: 30
+normalize_data: false
