@@ -1,7 +1,6 @@
 name: newcastle
 url: https://zenodo.org/record/1160410/files/dataset_psgnewcastle2015_v1.0.zip?download=1
 is_zipped: true
-is_sleep_staging: true
 sampling_rate: 85.7
 unpacked_path: newcastle/dataset_psgnewcastle2015_v1.0
 # {'R' : 5, 'W' : 0, 'N1' : 1, 'N2' : 2, 'N3' : 3, 'Unscored' : -1},

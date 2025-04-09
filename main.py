@@ -6,10 +6,10 @@ from src.data_download import get_dataset
 def main(cfg: DictConfig):
     if cfg.task == "download":
         get_dataset(
-            name=cfg.dataset.name,
+            name=cfg.classification_dataset.name,
             download_dir=cfg.datasets_dir,
-            is_zip=cfg.dataset.is_zipped,
-            url=cfg.dataset.url
+            is_zip=cfg.classification_dataset.is_zipped,
+            url=cfg.classification_dataset.url
         )
 
 if __name__ == "__main__":

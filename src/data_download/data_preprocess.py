@@ -10,12 +10,12 @@ import re
 
 # Main method for preprocessing dataset
 def make_dataset(
-    dataset_name,
-    sampling_rate,
-    low_pass_filter_freq,
-    try_preprocessed=False,
-    normalize_data=False,
-    win_len_s=30,
+        dataset_name,
+        sampling_rate,
+        low_pass_filter_freq,
+        try_preprocessed=False,
+        normalize_data=False,
+        win_len_s=30,
 ):
     """
     Loads raw dataset, processes it into a form ready for a model and saves preprocessed dataset to disk at the path
@@ -81,16 +81,16 @@ def make_dataset(
 
 
 def _process_data(
-    motion_data_sample,
-    labels_sample,
-    subject,
-    dataset_name,
-    dataset_sample_rate,
-    sampling_rate,
-    low_pass_filter_freq,
-    win_len_s=30,
-    value_clip=2,
-    normalize_data=False,
+        motion_data_sample,
+        labels_sample,
+        subject,
+        dataset_name,
+        dataset_sample_rate,
+        sampling_rate,
+        low_pass_filter_freq,
+        win_len_s=30,
+        value_clip=2,
+        normalize_data=False,
 ):
     motion_data_sample, _ = actipy.process(
         data=motion_data_sample,
@@ -106,22 +106,22 @@ def _process_data(
     # Process data window-wise
     win_len_samples = int(win_len_s * sampling_rate)
     for i in range(0, len(motion_data_sample), win_len_samples):
-        w = motion_data_sample.iloc[i : i + win_len_samples]
+        w = motion_data_sample.iloc[i: i + win_len_samples]
         if not is_good_quality(w, sampling_rate, win_len_s, labels_sample):
             # Make all data in w NaN
-            motion_data_sample.iloc[i : i + win_len_samples] = np.nan
+            motion_data_sample.iloc[i: i + win_len_samples] = np.nan
         # Clip data by replacing all values with absolute value > value_clip with value_clip
-        motion_data_sample.iloc[i : i + win_len_samples] = motion_data_sample.iloc[
-            i : i + win_len_samples
-        ].clip(-value_clip, value_clip)
+        motion_data_sample.iloc[i: i + win_len_samples] = motion_data_sample.iloc[
+                                                          i: i + win_len_samples
+                                                          ].clip(-value_clip, value_clip)
         # Normalize data window-wise
         if normalize_data:
             print("Normalizing data...")
-            w = motion_data_sample.iloc[i : i + win_len_samples]
+            w = motion_data_sample.iloc[i: i + win_len_samples]
             # Set lower limit for standard deviation to avoid division by zero
             stds = w.std()
             stds[stds < 1e-6] = 1e-6
-            motion_data_sample.iloc[i : i + win_len_samples] = (w - w.mean()) / stds
+            motion_data_sample.iloc[i: i + win_len_samples] = (w - w.mean()) / stds
     # Remove all motion data rows with NaNs
     motion_data_sample = motion_data_sample.dropna()
 
@@ -156,13 +156,13 @@ def is_good_quality(window, sampling_rate, WINDOW_SEC, labels, WINDOW_TOL=0.01):
 
 
 def load_preprocessed_dataset(
-    dataset_name, low_pass_filter_freq, model_sampling_rate, win_len_s, normalize_data
+        dataset_name, low_pass_filter_freq, model_sampling_rate, win_len_s, normalize_data
 ):
     motion_data_list = []
     labels_list = []
     loaded_from_cache = False
     for file in os.scandir(
-        project_constants.GET_PREPROCESSED_DATASET_PATH(dataset_name)
+            project_constants.GET_PREPROCESSED_DATASET_PATH(dataset_name)
     ):
         if file.name.endswith("_preprocessed.csv"):
             try:
@@ -181,10 +181,10 @@ def load_preprocessed_dataset(
                 normalize_data_pre = None
                 loaded_id = None
             if (
-                loaded_sampling_rate == model_sampling_rate
-                and loaded_low_pass_filter_freq == low_pass_filter_freq
-                and win_len_s_pre == win_len_s
-                and normalize_data_pre == normalize_data
+                    loaded_sampling_rate == model_sampling_rate
+                    and loaded_low_pass_filter_freq == low_pass_filter_freq
+                    and win_len_s_pre == win_len_s
+                    and normalize_data_pre == normalize_data
             ):
                 loaded_from_cache = True
                 if file.name.startswith("motion"):
@@ -224,14 +224,14 @@ def load_preprocessed_dataset(
 
 
 def save_preprocessed_dataset(
-    motion_data_list,
-    labels_list,
-    subject_ids,
-    dataset_name,
-    low_pass_filter_freq,
-    model_sampling_rate,
-    win_len_s,
-    normalize,
+        motion_data_list,
+        labels_list,
+        subject_ids,
+        dataset_name,
+        low_pass_filter_freq,
+        model_sampling_rate,
+        win_len_s,
+        normalize,
 ):
     for i in range(len(motion_data_list)):
         id_i = subject_ids[i]
@@ -259,9 +259,9 @@ def save_preprocessed_dataset(
 
 
 def load_raw_dataset(
-    dataset_name,
-    dataset_path,
-    label_dict,
+        dataset_name,
+        dataset_path,
+        label_dict,
 ):
     """
     Reads in raw dataset
@@ -389,9 +389,9 @@ def load_raw_dataset(
                                 # Reached data
                                 reached_data = True
                             elif (
-                                len(elems) >= 2
-                                and elems[0] == "Study"
-                                and elems[1] == "Date:"
+                                    len(elems) >= 2
+                                    and elems[0] == "Study"
+                                    and elems[1] == "Date:"
                             ):
                                 # Extract start date and time
                                 start_date = elems[2]
@@ -409,8 +409,8 @@ def load_raw_dataset(
                                 label_int = label_dict[label_str]
                                 date = start_timestamp.date()
                                 if (
-                                    elems[2].split()[1] == "AM"
-                                    and start_timestamp.hour > 18
+                                        elems[2].split()[1] == "AM"
+                                        and start_timestamp.hour > 18
                                 ):
                                     # If the label is from the next day, add one day to the timestamp
                                     date = date + pd.Timedelta(days=1)
@@ -744,7 +744,6 @@ def make_1_to_1_corresp(labels_data, motion_data):
         print(motion_data[i]["subject"].iloc[0])
 
 
-
 def drop_rows_without_label(data_df: pd.DataFrame, label_df: pd.DataFrame):
     """
     Drops rows from data_df with timestamps outside the range of label_df
@@ -763,6 +762,3 @@ def drop_rows_without_label(data_df: pd.DataFrame, label_df: pd.DataFrame):
     label_df.drop(columns=[timestamp_col], inplace=True)
 
     return data_df
-
-
-

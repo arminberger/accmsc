@@ -1,6 +1,7 @@
 defaults:
   - _self_
-  - dataset: applewatch
+  - classification_dataset: applewatch
+  - ssl_dataset: capture24
   
 datasets_dir: ${hydra:runtime.cwd}/data/raw
 task: download
