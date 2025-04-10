@@ -18,6 +18,9 @@ def unpack_dataset(
     Ensures that there is a 1:1 correspondence between the motion data and labels dataframes
     and that lists are sorted by subject ID.
     :param dataset_name: Name of the dataset, must be one of the constants in dataset_constants
+    :param dataset_path: Path to the dataset
+    :param label_dict: Dictionary mapping original sleep stage labels to integers according to our convention
+    
     :return: lists of dataframes (motion data, labels) with index containing datetime objects,
     one dataframe of format ['x', 'y', 'z', 'subject'],
     ['label', 'subject'], respectively, per subject and the name of the timestamp column
