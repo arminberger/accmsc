@@ -1,12 +1,12 @@
-import numpy as np
 import os
-import pandas as pd
-from scipy import signal
+
 import actipy
-import multiprocessing
-import re
-from src.data_download import unpack_dataset
+import numpy as np
+import pandas as pd
+
 from src.data_download import make_1_to_1_corresp
+from src.data_download import unpack_dataset
+
 
 # Main method for preprocessing dataset
 def make_dataset(
@@ -21,19 +21,7 @@ def make_dataset(
         dataset_path=None,
         label_dict=None,
 ):
-    """
-    Loads raw dataset, processes it into a form ready for a model and saves preprocessed dataset to disk at the path
-    by calling project_constants.GET_PREPROCESSED_DATASET_PATH(dataset_name). If preprocessing has already been done
-    and try_preprocessed is True, loads the preprocessed dataset from disk instead of preprocessing it again.
-    Args:
-        dataset_name:
-        sampling_rate:
-        low_pass_filter_freq:
-        try_preprocessed:
 
-    Returns:
-
-    """
     loaded_from_cache = False
     if try_cached:
         (
@@ -133,19 +121,19 @@ def process_data(
     return motion_data_sample
 
 
-def is_good_quality(window, sampling_rate, WINDOW_SEC, labels, WINDOW_TOL=0.01):
+def is_good_quality(window, sampling_rate, window_sec, labels, window_tol=0.01):
     """Window quality check"""
-    WINDOW_LEN = int(WINDOW_SEC * sampling_rate)
+    window_len = int(window_sec * sampling_rate)
     if window.isna().any().any():
         return False
 
-    if len(window) != WINDOW_LEN:
+    if len(window) != window_len:
         return False
 
     w_start, w_end = window.index[0], window.index[-1]
     w_duration = w_end - w_start
-    target_duration = pd.Timedelta(WINDOW_SEC, "s")
-    if np.abs(w_duration - target_duration) > WINDOW_TOL * target_duration:
+    target_duration = pd.Timedelta(window_sec, "s")
+    if np.abs(w_duration - target_duration) > window_tol * target_duration:
         return False
 
     # Check if window could have label -1

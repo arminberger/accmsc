@@ -1,11 +1,8 @@
-import numpy as np
 import os
-import pandas as pd
-from scipy import signal
-
-import actipy
-import multiprocessing
 import re
+import actipy
+import pandas as pd
+
 
 def unpack_dataset(
         dataset_name,
