@@ -1,10 +1,26 @@
 defaults:
   - _self_
-  - classification_dataset: applewatch
-  - ssl_dataset: capture24
-  
-datasets_dir: ${hydra:runtime.cwd}/data/raw
-task: download
+  - classifier/dataset: applewatch
+  - feature_extractor/dataset: capture24
+  - classifier/network: naive_mlp_small
+  - feature_extractor/network: harnet30
+  - classifier/label_transform: identity
+  # We mount all datasets under the download path to be able to download all of them even if they are not needed for classification
+  - classifier/dataset@download.applewatch: applewatch
+  - classifier/dataset@download.geneactiv: geneactiv
+  - classifier/dataset@download.newcastle: newcastle
+
+task: train_classifier
+# Environment config
+large_files_dir: ${hydra:runtime.cwd}
+# ML config
 lowpass_cutoff_frequency: 20
 window_length: 30
 normalize_data: false
+train_test_split: 0.2
+# Constants
+
+# Paths
+paths:
+  datasets: ${large_files_dir}/data/raw
+  model_checkpoints: ${large_files_dir}/checkpoints
