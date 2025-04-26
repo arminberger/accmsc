@@ -1,5 +1,5 @@
 import torch
-import tqdm
+from tqdm import tqdm
 import math
 
 def classification_train_loop(dataloader, model, device, loss_fn, optimizer):

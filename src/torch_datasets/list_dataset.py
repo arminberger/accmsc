@@ -42,6 +42,10 @@ class ListDataset(Dataset):
         ) + self.prev_elements
         data = []
         label = -1
+        print("first index:", first_index)
+        print("second index:", second_index)
+        if second_index == 0:
+            print('bug happens')
         for i in range(self.prev_elements + self.post_elements + 1):
             curr_data, curr_label = self.dataset_list[first_index][second_index - self.prev_elements + i]
             data.append(curr_data)

@@ -14,12 +14,13 @@ from src.train_classifier import train_model
 def run_classification(
     feature_extractor_name,
     classifier_name,
-    dataset_name,
+    dataset_cfg,
     device,
     train_label_transform_dict,
     test_label_transform_dict,
     dataset_sampling_rate,
     checkpoint_save_path,
+    paths_cfg,
     model_params=None,
     feature_extractor_local_path=None,
     prev_window=0,
@@ -71,7 +72,7 @@ def run_classification(
     Returns:
 
     """
-
+    dataset_name = dataset_cfg.name
     # Add all the parameters to the tensorboard writer
     writer = SummaryWriter()
     summary_string = (
@@ -151,13 +152,16 @@ def run_classification(
             labels_list_name,
             subject_ids_name,
         ) = make_dataset(
-            name,
+            dataset_cfg=dataset_cfg,
+            paths_cfg=paths_cfg,
             target_sampling_rate=sampling_rate,
             dataset_sample_rate=dataset_sampling_rate,
             low_pass_filter_freq=human_act_freq_cutoff,
             try_cached=True,
             win_len_s=input_len_sec,
             normalize_data=normalize_data,
+            cache_path=paths_cfg.processed_data,
+            label_dict=dataset_cfg.labels,
         )
         dataset_list_name = [
             AccDataset(

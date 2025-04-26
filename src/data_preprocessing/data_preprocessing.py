@@ -10,7 +10,8 @@ from src.data_download import unpack_dataset
 
 # Main method for preprocessing dataset
 def make_dataset(
-        dataset_name,
+        dataset_cfg,
+        paths_cfg,
         target_sampling_rate,
         dataset_sample_rate,
         low_pass_filter_freq,
@@ -21,7 +22,9 @@ def make_dataset(
         dataset_path=None,
         label_dict=None,
 ):
-
+    dataset_name = dataset_cfg.name
+    if dataset_path is None:
+        dataset_path = os.path.join(paths_cfg.datasets, dataset_cfg.unpacked_path)
     loaded_from_cache = False
     if try_cached:
         (
@@ -36,6 +39,7 @@ def make_dataset(
             normalize_data,
             cache_path,
         )
+
 
     if loaded_from_cache:
         return motion_data_list, labels_list, subject_ids

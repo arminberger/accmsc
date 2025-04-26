@@ -3,26 +3,36 @@ from omegaconf import DictConfig
 from src.data_download import get_dataset
 from src.train_classifier import run_classification
 from src.utils import get_available_device
+import os
 
 @hydra.main(config_path="conf", config_name="config", version_base=None)
 def main(cfg: DictConfig):
+    for path in cfg.paths:
+        # Check if the path exists and create it if it doesn't
+        if not os.path.exists(cfg.paths[path]):
+            os.makedirs(cfg.paths[path])
+            print(f"Created directory: {cfg.paths[path]}")
+
     if cfg.task == "download":
-        get_dataset(
-            name=cfg.classification_dataset.name,
-            download_dir=cfg.datasets_dir,
-            is_zip=cfg.classification_dataset.is_zipped,
-            url=cfg.classification_dataset.url
-        )
+        datasets_to_download = cfg.download
+        for dataset in datasets_to_download:
+            get_dataset(
+                name=datasets_to_download[dataset].name,
+                download_dir=cfg.paths.datasets,
+                is_zip=datasets_to_download[dataset].is_zipped,
+                url=datasets_to_download[dataset].url
+            )
     if cfg.task == "train_classifier":
         run_classification(
             feature_extractor_name=cfg.feature_extractor.network.name,
             classifier_name=cfg.classifier.network.name,
-            dataset_name=cfg.classifier.dataset.name,
+            dataset_cfg=cfg.classifier.dataset,
             device=get_available_device(),
             train_label_transform_dict=cfg.classifier.label_transform.transform,
             test_label_transform_dict=cfg.classifier.label_transform.transform,
+            paths_cfg=cfg.paths,
             dataset_sampling_rate=cfg.classifier.dataset.sampling_rate,
-            checkpoint_save_path=cfg.model_checkpoint_dir,
+            checkpoint_save_path=cfg.paths.model_checkpoints,
             model_params={'augs': ['t_warp', 'lfc', 'rotation']},
             prev_window=8 if cfg.classifier.network.name == 'lstm_classifier' else 0,
             post_window=8 if cfg.classifier.network.name == 'lstm_classifier' else 0,

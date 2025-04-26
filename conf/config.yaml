@@ -8,7 +8,7 @@ defaults:
   # We mount all datasets under the download path to be able to download all of them even if they are not needed for classification
   - classifier/dataset@download.applewatch: applewatch
   - classifier/dataset@download.geneactiv: geneactiv
-  - classifier/dataset@download.newcastle: newcastle
+#  - classifier/dataset@download.newcastle: newcastle
 
 task: train_classifier
 # Environment config
@@ -24,3 +24,4 @@ train_test_split: 0.2
 paths:
   datasets: ${large_files_dir}/data/raw
   model_checkpoints: ${large_files_dir}/checkpoints
+  processed_data: ${large_files_dir}/data/processed

@@ -66,7 +66,7 @@ class AccDataset(Dataset):
 
 def apply_label_transform(label, label_transform):
     if isinstance(label_transform, Mapping):
-        label = label_transform[label]
+        label = label_transform[int(label)]
     elif label_transform is not None:
         label = label_transform(label)
     return label
