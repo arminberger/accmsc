@@ -35,7 +35,7 @@ def run_classification(
     normalize_data=False,
     classifier_drouput=0,
     cross_validation=0,
-    looocv=False,
+    looocv=True,
     weight_decay=1e-4,
     do_select_model=True,
     viterbi=False,
@@ -449,7 +449,7 @@ def run_classification(
         )
 
         test_dataloader = [DataLoader(ListDataset(
-            dataset_list=x, prev_elements=prev_window, post_elements=post_window
+            dataset_list=[x], prev_elements=prev_window, post_elements=post_window
         ), batch_size=512, shuffle=False) for x in test_list]
         print("Train without cross validation")
         train_list, val_list = split_subject_wise(
@@ -471,7 +471,7 @@ def run_classification(
         )
 
         val_dataloader = [DataLoader(ListDataset(
-            dataset_list=x, prev_elements=prev_window, post_elements=post_window
+            dataset_list=[x], prev_elements=prev_window, post_elements=post_window
         ), batch_size=512, shuffle=False) for x in val_list]
         train_model(
             my_model=my_model,
