@@ -1,6 +1,8 @@
 import math
+
+
 import self_supervised.data as data
-import self_supervised.resnet1d as resnet1d
+
 import self_supervised.ss_training as ss_training
 import torch
 import utils.ml_utils as torch_utils
@@ -14,6 +16,7 @@ from constants import project_constants
 
 def run_simclr_cap24_weighted_subject_wise(
     augs,
+    paths_cfg,
     low_pass_freq=20,
     backbone_out_dim=1024,
     projection_out_dim=128,

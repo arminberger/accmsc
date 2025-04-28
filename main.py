@@ -52,6 +52,24 @@ def main(cfg: DictConfig):
             viterbi=False,
             batch_norm_after_feature_extractor=False,
         )
+    if cfg.task == "train_ssl":
+        print("Training SSL")
+        # run_simclr_cap24_weighted_subject_wise(
+        #     num_workers=10,
+        #     window_len=10,
+        #     low_pass_freq=20,
+        #     augs=["na", "t_flip"],
+        #     backbone_name='resnet_tiny',
+        #     weighted=False,
+        #     batch_size=2048,
+        #     num_subjects=4,
+        #     num_epochs=60,
+        #     grad_checkpointing=False,
+        #     use_adam=True,
+        #     autocast=True,
+        #     weight_decay=True
+        # )
+
 
 
 if __name__ == "__main__":

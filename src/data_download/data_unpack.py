@@ -7,7 +7,7 @@ import pandas as pd
 def unpack_dataset(
         dataset_name,
         dataset_path,
-        label_dict,
+        label_dict=None,
 ):
     """
     Reads in raw dataset
