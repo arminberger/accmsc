@@ -13,6 +13,7 @@ def classification_train_loop(dataloader, model, device, loss_fn, optimizer):
         pred = model(X)
         loss = loss_fn(pred, y)
 
+
         # Backpropagation
 
         loss.backward()
