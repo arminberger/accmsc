@@ -1,6 +1,7 @@
 name: capture24
 url: https://ora.ox.ac.uk/objects/uuid:99d7c092-d865-4a19-b096-cc16440cd001/files/rpr76f381b
 is_zipped: true
-sampling_rate: 1
-unpacked_path: cap24/capture24
+sampling_rate: 100
+unpacked_path: capture24/capture24
 sampling_period_ms: ${eval:'1000/${sampling_rate}'}
+has_labels: false

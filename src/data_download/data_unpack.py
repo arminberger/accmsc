@@ -2,9 +2,54 @@ import os
 import re
 import actipy
 import pandas as pd
+from tqdm import tqdm
+import numpy as np
 
+def unpack_unlabelled_dataset(dataset_name, dataset_path):
+    if dataset_name=='capture24':
+        motion_data, subject_ids = unpack_capture24(dataset_path)
+    else:
+        raise ValueError(f"Unknown dataset name: {dataset_name}")
+    return motion_data, subject_ids
 
-def unpack_dataset(
+def unpack_capture24(dataset_path):
+    motion_data = []
+    subject_ids = []
+    for file in tqdm(os.scandir(dataset_path)):
+        filepath = file.path
+        print(filepath)
+        filename = os.path.basename(filepath)
+        # Load subject
+        if filename.endswith(".csv.gz"):
+            print(filename)
+            # Extract ID from filename
+            subject_id = filename.split(".")[0]
+            subject_id = subject_id.replace("P", "")
+            subject_id = int(subject_id)
+            data_pd = pd.read_csv(
+                filepath,
+                parse_dates=["time"],
+                index_col='time',
+                dtype={
+                    "x": np.float32,
+                    "y": np.float32,
+                    "z": np.float32,
+                    "annotation": str,
+                },
+            )
+            data_pd.sort_index(inplace=True, ascending=True, kind="mergesort")
+            data = data_pd
+            data = data.drop(columns=["annotation"])
+            data["subject"] = subject_id
+            data["timestamp"] = data.index
+
+            motion_data.append(data)
+            subject_ids.append(subject_id)
+    motion_data.sort(key=lambda x: x["subject"].iloc[0])
+    subject_ids.sort()
+    return motion_data, subject_ids
+
+def unpack_labelled_dataset(
         dataset_name,
         dataset_path,
         label_dict=None,
@@ -381,5 +426,3 @@ def make_1_to_1_corresp(labels_data, motion_data):
     for i in range(len(motion_data)):
         assert motion_data[i]["subject"].iloc[0] == labels_data[i]["subject"].iloc[0]
         print(motion_data[i]["subject"].iloc[0])
-
-

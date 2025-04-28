@@ -3,6 +3,7 @@ url: https://zenodo.org/record/1160410/files/dataset_psgnewcastle2015_v1.0.zip?d
 is_zipped: true
 sampling_rate: 85.7
 unpacked_path: newcastle/dataset_psgnewcastle2015_v1.0
+has_labels: true
 # {'R' : 5, 'W' : 0, 'N1' : 1, 'N2' : 2, 'N3' : 3, 'Unscored' : -1},
 labels:
   Unscored: -1

@@ -3,6 +3,7 @@ url: https://polybox.ethz.ch/index.php/s/W8jtM0ZdmdWvRBG/download
 is_zipped: true
 sampling_rate: 100
 unpacked_path: genactiv_validation
+has_labels: true
 # {"Wake": 0, "NREM 1": 1, "NREM 2": 2, "NREM 3": 3, "REM": 5},
 labels:
   Wake: 0
