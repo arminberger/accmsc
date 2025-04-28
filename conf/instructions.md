@@ -1,0 +1,1 @@
+To change the path where the datasets are downloaded and stored, change the `datasets_dir` in the `config.yaml` file or pass in a different path as an argument to the `main.py` script.
