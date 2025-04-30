@@ -11,10 +11,11 @@ defaults:
   - classifier/dataset@download.newcastle: newcastle
   - feature_extractor/dataset@download.capture24: capture24
 
+# Can be 'download', 'train_classifier'
 task: train_classifier
 # Environment config
 #large_files_dir: ${hydra:runtime.cwd}
-large_files_dir: /cluster/scratch/aplanincic
+large_files_dir: /cluster/scratch/aplanincic/accmsc
 # ML config
 lowpass_cutoff_frequency: 20
 window_length: 30
