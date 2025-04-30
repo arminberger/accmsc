@@ -13,7 +13,8 @@ defaults:
 
 task: train_classifier
 # Environment config
-large_files_dir: ${hydra:runtime.cwd}
+#large_files_dir: ${hydra:runtime.cwd}
+large_files_dir: /cluster/scratch/aplanincic
 # ML config
 lowpass_cutoff_frequency: 20
 window_length: 30
