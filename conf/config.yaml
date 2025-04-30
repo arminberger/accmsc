@@ -6,12 +6,12 @@ defaults:
   - feature_extractor/network: harnet30
   - classifier/label_transform: identity
   # We mount all datasets under the download path to be able to download all of them even if they are not needed for classification
-#  - classifier/dataset@download.applewatch: applewatch
-#  - classifier/dataset@download.geneactiv: geneactiv
-#  - classifier/dataset@download.newcastle: newcastle
+  - classifier/dataset@download.applewatch: applewatch
+  - classifier/dataset@download.geneactiv: geneactiv
+  - classifier/dataset@download.newcastle: newcastle
   - feature_extractor/dataset@download.capture24: capture24
 
-task: download
+task: train_classifier
 # Environment config
 large_files_dir: ${hydra:runtime.cwd}
 # ML config

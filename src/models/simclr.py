@@ -1,11 +1,4 @@
-import copy
-import random
-from functools import wraps
-
-import torch
 from torch import nn
-import torch.nn.functional as F
-
 
 class SimCLR(nn.Module):
     def __init__(

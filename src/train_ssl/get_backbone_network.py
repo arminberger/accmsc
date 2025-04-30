@@ -1,8 +1,8 @@
-from src.models import ResNet1D as resnet1d
+from src.models import ResNet1D
 
-def get_model(name, output_dim, grad_checkpointing=False):
+def get_backbone_network(name, output_dim, grad_checkpointing=False):
     if name == "resnet_large":
-        return resnet1d.ResNet1D(
+        return ResNet1D(
             in_channels=3,
             base_filters=64,
             kernel_size=5,
@@ -14,7 +14,7 @@ def get_model(name, output_dim, grad_checkpointing=False):
             gradient_checkpointing=grad_checkpointing,
         )
     if name == "resnet_mid":
-        return resnet1d.ResNet1D(
+        return ResNet1D(
             in_channels=3,
             base_filters=64,
             kernel_size=5,
@@ -26,7 +26,7 @@ def get_model(name, output_dim, grad_checkpointing=False):
             gradient_checkpointing=grad_checkpointing,
         )
     if name == "resnet_small":
-        return resnet1d.ResNet1D(
+        return ResNet1D(
             in_channels=3,
             base_filters=64,
             kernel_size=5,
@@ -38,7 +38,7 @@ def get_model(name, output_dim, grad_checkpointing=False):
             gradient_checkpointing=grad_checkpointing,
         )
     if name == "resnet_tiny":
-        return resnet1d.ResNet1D(
+        return ResNet1D(
             in_channels=3,
             base_filters=64,
             kernel_size=5,
@@ -49,3 +49,5 @@ def get_model(name, output_dim, grad_checkpointing=False):
             n_classes=output_dim,
             gradient_checkpointing=grad_checkpointing,
         )
+    else:
+        raise ValueError(f"Unknown backbone name: {name}")

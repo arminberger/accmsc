@@ -10,16 +10,17 @@ def make_dataset(
         dataset_cfg,
         paths_cfg,
         target_sampling_rate,
-        dataset_sample_rate,
         low_pass_filter_freq,
-        try_cached=False,
-        cache_path=None,
+        try_cached=True,
         normalize_data=False,
         win_len_s=30,
         dataset_path=None,
-        label_dict=None,
 ):
     dataset_name = dataset_cfg.name
+    dataset_sample_rate = dataset_cfg.sampling_rate
+    cache_path = paths_cfg.processed_data
+    label_dict = dataset_cfg.labels
+
     if dataset_path is None:
         dataset_path = os.path.join(paths_cfg.datasets, dataset_cfg.unpacked_path)
 

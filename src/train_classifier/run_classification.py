@@ -155,13 +155,10 @@ def run_classification(
             dataset_cfg=dataset_cfg,
             paths_cfg=paths_cfg,
             target_sampling_rate=sampling_rate,
-            dataset_sample_rate=dataset_sampling_rate,
             low_pass_filter_freq=human_act_freq_cutoff,
             try_cached=True,
             win_len_s=input_len_sec,
             normalize_data=normalize_data,
-            cache_path=paths_cfg.processed_data,
-            label_dict=dataset_cfg.labels,
         )
         dataset_list_name = [
             AccDataset(
