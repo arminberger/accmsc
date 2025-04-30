@@ -2,7 +2,7 @@ import os
 import re
 import torch
 from src.models import Resnet, RNNModel, LSTMModel, SimCLR
-from src.train_ssl import get_model as get_ssl_model
+from src.train_ssl import get_backbone_network as get_ssl_model
 from torch import nn
 
 def get_full_classification_model(
