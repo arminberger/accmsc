@@ -1,3 +1,4 @@
 from .get_backbone_network import get_backbone_network
 from .ssl_augmentations import gen_aug
 from .train_ssl import train_simclr_precomputed_augs_per_subject
+from .run_ssl import run_simclr_cap24_weighted_subject_wise

@@ -1,6 +1,7 @@
 name: applewatch
-url: https://physionet.org/files/sleep-accel/1.0.0/
-is_zipped: false
+# url: https://physionet.org/files/sleep-accel/1.0.0/ # This is the original URL. If using it, set is_zipped to false
+url: https://polybox.ethz.ch/index.php/s/6Q2mrkooZyHfTQ6/download/physionet.org.zip
+is_zipped: true
 sampling_rate: 50
 unpacked_path: applewatch/physionet.org/files/sleep-accel/1.0.0
 has_labels: true
