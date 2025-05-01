@@ -98,7 +98,7 @@ def make_dataset(
 
 def process_motion_data(motion_data_sample, normalize_data, sampling_rate, value_clip, win_len_s, win_len_samples):
     for i in range(0, len(motion_data_sample), win_len_samples):
-
+        w = motion_data_sample.iloc[i: i + win_len_samples]
         if not is_good_quality(w, sampling_rate, win_len_s):
             # Make all data in w NaN
             motion_data_sample.iloc[i: i + win_len_samples] = np.nan
@@ -110,7 +110,6 @@ def process_motion_data(motion_data_sample, normalize_data, sampling_rate, value
         # Normalize data window-wise
         if normalize_data:
             print("Normalizing data...")
-            w = motion_data_sample.iloc[i: i + win_len_samples]
             # Set lower limit for standard deviation to avoid division by zero
             stds = w.std()
             stds[stds < 1e-6] = 1e-6
