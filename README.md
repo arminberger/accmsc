@@ -1,15 +1,14 @@
-Before running the training and evaluation, you need to download the datasets.
+To replicate the locked environment install uv and run the following command:
 
 ```bash
-for dataset in applewatch capture24 newcastle geneactiv; do
-  python main.py task=download dataset.name=$dataset
-done
+uv sync
 ```
 
-Then, the raw data has to be unpacked and brought into the correct format.
+This will create a virtual environment and install all the dependencies in it.
+
+Before running the training and evaluation, you need to download the datasets. This might take some time.
 
 ```bash
-for dataset in applewatch capture24 newcastle geneactiv; do
-  python main.py task=unpack dataset.name=$dataset
-done
+uv run python main.py task=download
 ```
+
