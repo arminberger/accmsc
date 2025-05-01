@@ -73,8 +73,6 @@ def main(cfg: DictConfig):
             weight_decay=True
         )
 
-
-
 if __name__ == "__main__":
     main()
     
