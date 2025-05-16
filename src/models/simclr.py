@@ -30,26 +30,10 @@ class SimCLR(nn.Module):
         )
 
     def forward(self, x1, x2):
-        if (
-            self.backbone_name == "resnet_large"
-            or self.backbone_name == "resnet_mid"
-            or self.backbone_name == "resnet_small"
-            or self.backbone_name == "resnet_tiny"
-        ):
-            z1 = self.backbone(x1)
-            z2 = self.backbone(x2)
-        elif self.backbone.__class__.__name__ in ["AE", "CNN_AE"]:
-            x1_encoded, z1 = self.backbone(x1)
-            x2_encoded, z2 = self.backbone(x2)
-        else:
-            print(f"Backbone {self.backbone_name} not supported")
-            raise NotImplementedError
-        """
-        else:
-            _, z1 = self.backbone(x1)
-            _, z2 = self.backbone(x2)
-        """
-        # TODO: Check if this is compatible with Resnet50
+
+        z1 = self.backbone(x1)
+        z2 = self.backbone(x2)
+
         if len(z1.shape) == 3:
             z1 = z1.reshape(z1.shape[0], -1)
             z2 = z2.reshape(z2.shape[0], -1)
@@ -57,10 +41,7 @@ class SimCLR(nn.Module):
         z1 = self.projector(z1)
         z2 = self.projector(z2)
 
-        if self.backbone.__class__.__name__ in ["AE", "CNN_AE"]:
-            return x1_encoded, x2_encoded, z1, z2
-        else:
-            return z1, z2
+        return z1, z2
 
 
 class Projector(nn.Module):
