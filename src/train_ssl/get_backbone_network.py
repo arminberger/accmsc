@@ -1,4 +1,6 @@
 from src.models import ResNet1D
+from src.models import Resnet
+import torch
 
 def get_backbone_network(name, output_dim, grad_checkpointing=False):
     if name == "resnet_large":
@@ -49,5 +51,17 @@ def get_backbone_network(name, output_dim, grad_checkpointing=False):
             n_classes=output_dim,
             gradient_checkpointing=grad_checkpointing,
         )
+    if name == "resnet_harnet":
+        # Expects input with size (batch_size, 3, 300)
+        model = Resnet(
+            output_size=2, is_eva=True, resnet_version=1, epoch_len=10
+        )
+        model = model.feature_extractor
+        # Reshape to remove last dimension of output
+        model = torch.nn.Sequential(
+            model,
+            torch.nn.Flatten(),
+        )
+        return model
     else:
         raise ValueError(f"Unknown backbone name: {name}")
