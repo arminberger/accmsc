@@ -55,23 +55,11 @@ def main(cfg: DictConfig):
         )
     if cfg.task == "train_ssl":
         print("Training SSL")
-        run_simclr_cap24_weighted_subject_wise(
-            dataset_cfg=cfg.feature_extractor.dataset,
-            paths_cfg=cfg.paths,
-            num_workers=10,
-            window_len=10,
-            low_pass_freq=20,
-            augs=["na", "t_flip"],
-            backbone_name='resnet_tiny',
-            weighted=False,
-            batch_size=2048,
-            num_subjects=4,
-            num_epochs=60,
-            grad_checkpointing=False,
-            use_adam=True,
-            autocast=True,
-            weight_decay=True
-        )
+        run_simclr_cap24_weighted_subject_wise(dataset_cfg=cfg.feature_extractor.dataset, augs=["na", "t_flip"],
+                                               paths_cfg=cfg.paths, low_pass_freq=15, backbone_name="resnet_harnet",
+                                               window_len=10, num_workers=10, num_epochs=60,
+                                               batch_size=2048, num_subjects=4, grad_checkpointing=False, use_adam=True,
+                                               weight_decay=True, autocast=True, normalize_data=True)
 
 if __name__ == "__main__":
     main()

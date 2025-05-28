@@ -5,7 +5,6 @@ class SimCLR(nn.Module):
         self,
         backbone,
         backbone_output_dim,
-        backbone_name,
         projector_output_dim=128,
     ):
         """_summary_
@@ -19,7 +18,6 @@ class SimCLR(nn.Module):
         super(SimCLR, self).__init__()
 
         self.backbone = backbone
-        self.backbone_name = backbone_name
         self.backbone_output_dim = backbone_output_dim
         # Projector has to be dropped when using the backbone to train downstream tasks
         self.projector = Projector(

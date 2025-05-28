@@ -7,7 +7,7 @@ class SSRawDataset(Dataset):
     def __init__(
         self,
         motion_df_list,
-        win_length,
+        win_length_samples,
         motion_cols=["x", "y", "z"],
         transform=None,
         channels_first=True,
@@ -23,7 +23,7 @@ class SSRawDataset(Dataset):
         """
         super().__init__()
         self.motion_df_list = motion_df_list
-        self.win_length = win_length
+        self.win_length = win_length_samples
         self.motion_cols = motion_cols
         self.motion_chan = len(motion_cols)
         self.transform = transform

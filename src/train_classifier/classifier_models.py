@@ -392,7 +392,6 @@ def load_own_simclr(backbone_name, local_path, output_dim, proj_dim):
     backbone = get_ssl_model(backbone_name, output_dim)
     model = SimCLR(
         backbone=backbone,
-        backbone_name=backbone_name,
         backbone_output_dim=output_dim,
         projector_output_dim=proj_dim,
     )

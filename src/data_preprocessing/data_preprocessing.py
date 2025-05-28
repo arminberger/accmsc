@@ -19,7 +19,7 @@ def make_dataset(
     dataset_name = dataset_cfg.name
     dataset_sample_rate = dataset_cfg.sampling_rate
     cache_path = paths_cfg.processed_data
-    label_dict = dataset_cfg.labels
+    label_dict = dataset_cfg.labels if dataset_cfg.has_labels else None
 
     if dataset_path is None:
         dataset_path = os.path.join(paths_cfg.datasets, dataset_cfg.unpacked_path)
@@ -109,7 +109,6 @@ def process_motion_data(motion_data_sample, normalize_data, sampling_rate, value
                                                           ].clip(-value_clip, value_clip)
         # Normalize data window-wise
         if normalize_data:
-            print("Normalizing data...")
             # Set lower limit for standard deviation to avoid division by zero
             stds = w.std()
             stds[stds < 1e-6] = 1e-6

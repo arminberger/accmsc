@@ -41,11 +41,14 @@ def unpack_capture24(dataset_path):
             data = data_pd
             data = data.drop(columns=["annotation"])
             data["subject"] = subject_id
-            data["timestamp"] = data.index
 
             motion_data.append(data)
             subject_ids.append(subject_id)
     motion_data.sort(key=lambda x: x["subject"].iloc[0])
+    # Drop subject column
+    for i in range(len(motion_data)):
+        motion_data[i].drop(columns=["subject"], inplace=True)
+
     subject_ids.sort()
     return motion_data, subject_ids
 
@@ -65,7 +68,7 @@ def unpack_labelled_dataset(
     
     :return: lists of dataframes (motion data, labels) with index containing datetime objects,
     one dataframe of format ['x', 'y', 'z', 'subject'],
-    ['label', 'subject'], respectively, per subject and the name of the timestamp column
+    ['label', 'subject'], respectively, per subject
     """
 
 

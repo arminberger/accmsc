@@ -10,36 +10,20 @@ from src.data_preprocessing import make_dataset
 from src.utils import split_subject_wise
 from src.torch_datasets import SSLazyAugDatasetSubjectWise, SSRawDataset, CombinedDataset
 
-def run_simclr_cap24_weighted_subject_wise(
-    dataset_cfg,
-    augs,
-    paths_cfg,
-    low_pass_freq=20,
-    backbone_out_dim=1024,
-    projection_out_dim=128,
-    backbone_name="resnet_tiny",
-    window_len=30,
-    num_workers=0,
-    pretrained_simclr_dict_path=None,
-    num_epochs=100,
-    weighted=True,
-    batch_size=256,
-    num_subjects=1,
-    night_only=False,
-    grad_checkpointing=False,
-    linear_scaling=False,
-    use_adam=True,
-    weight_decay=True,
-    autocast=False,
-    normalize_data=False,
-    provided_data=None,
-):
+
+def run_simclr_cap24_weighted_subject_wise(dataset_cfg, augs, paths_cfg, low_pass_freq=15, sampling_rate=30,
+                                           feature_vector_dim=1024, projection_out_dim=128, backbone_name="resnet_tiny",
+                                           window_len=30, num_workers=0, pretrained_simclr_dict_path=None,
+                                           num_epochs=100, batch_size=256, num_subjects=1,
+                                           night_only=False, grad_checkpointing=False, linear_scaling=False,
+                                           use_adam=True, weight_decay=True, autocast=False, normalize_data=False,
+                                           provided_data=None, train_val_split_ratio=0.2):
     """
 
     Args:
         augs: List of augmentations to use, names of augmentations can be "na", "ap_p", "shuffle", "jit_scal","lfc","perm_jit","resample","noise","scale","negate","t_flip", "rotation", "perm", "t_warp", "hfc", "p_shift", "ap_f".
         low_pass_freq: The low pass frequency to use for the data
-        backbone_out_dim: The output dimension of the backbone network
+        feature_vector_dim: The output dimension of the backbone network
         projection_out_dim: The output dimension of the projectior in the SimCLR terminology
         backbone_name: The name of the backbone network to use, names can be "resnet_tiny", "resnet_small", "resnet_mid", and definitions can be found in the source/self_supervised/get_ss_models.py file.
         window_len: The length of the window to use for the self supervised training, in seconds.
@@ -61,122 +45,100 @@ def run_simclr_cap24_weighted_subject_wise(
     Returns:
 
     """
-
     DEVICE = get_available_device()
     print(f"Using device: {DEVICE}")
 
-    augs_str = [f"${aug}$" for aug in augs]
-    augs_str = "_".join(augs_str)
-    HUMAN_ACT_MAX_FREQ = low_pass_freq
-    sampling_rate = 2 * HUMAN_ACT_MAX_FREQ
-    WINDOW_LEN_SEC = window_len
+    # Check if sampling rate is at least twice the low pass frequency
+    if sampling_rate < 2 * low_pass_freq:
+        raise ValueError(
+            f"Sampling rate {sampling_rate} is too low for the low pass frequency {low_pass_freq}"
+        )
 
     # Get the backbone network
-    backbone_output_dim = backbone_out_dim
-    backbone_name = backbone_name
     backbone_network = get_backbone_network(
-        name=backbone_name, output_dim=backbone_output_dim, grad_checkpointing=grad_checkpointing
+        name=backbone_name, output_dim=feature_vector_dim, grad_checkpointing=grad_checkpointing
     )
+
     # Get the SimCLR model
-    projection_output_dim = projection_out_dim
     model = SimCLR(
         backbone=backbone_network,
-        backbone_name=backbone_name,
-        backbone_output_dim=backbone_output_dim,
-        projector_output_dim=projection_output_dim,
+        backbone_output_dim=feature_vector_dim,
+        projector_output_dim=projection_out_dim,
     )
 
     # Load the pretrained SimCLR model
     if pretrained_simclr_dict_path is not None:
         model.load_state_dict(torch.load(pretrained_simclr_dict_path))
-    # Print size of resnet in MB
-    param_size = 0
-    for param in backbone_network.parameters():
-        param_size += param.nelement() * param.element_size()
-    buffer_size = 0
-    for buffer in backbone_network.buffers():
-        buffer_size += buffer.nelement() * buffer.element_size()
-    size_all_mb = (param_size + buffer_size) / 1024**2
-    print(f"Backbone model size: {size_all_mb}MB")
-    # Print number of trainable parameters
-    print(
-        f"Number of trainable parameters in backbone: "
-        f"{str(sum(p.numel() for p in backbone_network.parameters() if p.requires_grad))}"
-    )
-    # Print the model
-    print(backbone_network)
+
+    print_backbone_info(backbone_network)
 
     # Get the data
-    split_ratio = 0.2
+    print('Loading data...')
     if provided_data is None:
         motion_data_list, subject_ids = make_dataset(
             dataset_cfg,
             paths_cfg,
             target_sampling_rate=sampling_rate,
-            low_pass_filter_freq=HUMAN_ACT_MAX_FREQ,
+            low_pass_filter_freq=low_pass_freq,
             normalize_data=normalize_data,
-            win_len_s=WINDOW_LEN_SEC,
+            win_len_s=window_len,
         )
         dataset_per_subject_list = []
         for subject in motion_data_list:
             dataset_per_subject_list.append(
                 SSRawDataset(
                     motion_df_list=[subject],
-                    win_length=WINDOW_LEN_SEC,
+                    win_length_samples=window_len * sampling_rate,
                     channels_first=False,
                 )
             )
-        train_val, test = split_subject_wise(
-            dataset_per_subject_list, split_ratio, random_gen=random.Random(42)
-        )
         train, val = split_subject_wise(
-            train_val,
-            split_ratio,
-            random_gen=random.Random(42),
+            dataset_per_subject_list, train_val_split_ratio, random_gen=random.Random(42)
         )
+
         # Compute weighted sampler weights – weights are not connected to aug
         train_weights = compute_weights(train)
         # Dataset dict should have a list of subjects for every augmentation
-        train_dict_list = compute_aug_dataset_list(augs, train, DEVICE)
-        val_dict_list = compute_aug_dataset_list(augs, val, DEVICE)
-        test_dict_list = compute_aug_dataset_list(augs, test, DEVICE)
+        train_dict_list = compute_aug_dataset_list(augs, train)
+        val_dict_list = compute_aug_dataset_list(augs, val)
 
     else:
         train_dict_list, val_dict_list = provided_data
-        test_dict_list = None
-        train_weigths = None
+        train_weights = None
 
     # Set up training parameters and dataloaders
+    print('Setting up training...')
     batch_size = batch_size
     learning_rate = 1e-3
     epochs = num_epochs
     dataloader_workers = 0
-
 
     criterion = NTXentLossNew(DEVICE, batch_size, temperature=0.1)
     criterion = criterion.to(DEVICE)
     # Use linear scaling for the optimizer
     k_factor = math.ceil(batch_size / 256)
     learning_rate = learning_rate if not linear_scaling else learning_rate * k_factor
-    optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate, weight_decay=0 if not weight_decay else 1e-4) if use_adam else torch.optim.SGD(model.parameters(), lr=learning_rate, momentum=0.9, weight_decay=1e-4)
-    """
-    scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
-        optimizer, T_max=epochs, eta_min=0
-    )
-    """
+    optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate,
+                                 weight_decay=0 if not weight_decay else 1e-4) if use_adam else torch.optim.SGD(
+        model.parameters(), lr=learning_rate, momentum=0.9, weight_decay=1e-4)
+
     # Use warmup scheduler
     def schedule(epoch):
         start_factor = 1 / k_factor
         lr = learning_rate
         warmup = 5
         if epoch < warmup:
-            lr = epoch * (1/(start_factor*warmup)) * (learning_rate * start_factor)
+            lr = epoch * (1 / (start_factor * warmup)) * (learning_rate * start_factor)
         return k_factor * lr
+
     scheduler = None if not linear_scaling else torch.optim.lr_scheduler.LambdaLR(optimizer, lr_lambda=schedule)
+
+    augs_str = [f"${aug}$" for aug in augs]
+    augs_str = "_".join(augs_str)
     model_name = (
         f"simclr_bn_{backbone_name}_augs_{augs_str}_lr_{learning_rate}"
-        f"_bs_{batch_size}_outdim_{backbone_output_dim}_sr_{sampling_rate}"
-        f"_winlen_{WINDOW_LEN_SEC}_projdim_{projection_output_dim}_wght_{weighted}_subj_{num_subjects}_no_{night_only}_ls_{linear_scaling}"
+        f"_bs_{batch_size}_outdim_{feature_vector_dim}_sr_{sampling_rate}"
+        f"_winlen_{window_len}_projdim_{projection_out_dim}_subj_{num_subjects}_no_{night_only}_ls_{linear_scaling}"
         f"_gc_{grad_checkpointing}_adam_{use_adam}_wd_{weight_decay}_ac_{autocast}_norm_{normalize_data}"
     )
 
@@ -192,7 +154,7 @@ def run_simclr_cap24_weighted_subject_wise(
 
     val_loaders = []
     for i in range(len(val_dict_list)):
-        aug_sets=list(val_dict_list[i].values())
+        aug_sets = list(val_dict_list[i].values())
         aug_set = CombinedDataset(datasets=aug_sets)
         val_loaders.append(
             torch.utils.data.DataLoader(
@@ -216,7 +178,7 @@ def run_simclr_cap24_weighted_subject_wise(
         optimizer=optimizer,
         scheduler=scheduler,
         model_name=model_name,
-        dataset_weights=train_weigths,
+        dataset_weights=train_weights,
         num_subjects_per_set=num_subjects,
         grad_checkpointing=grad_checkpointing,
         autocast=autocast,
@@ -224,13 +186,33 @@ def run_simclr_cap24_weighted_subject_wise(
     # Save the best model (best_model already is a state_dict)
     torch.save(best_model, os.path.join(paths_cfg.model_checkpoints, f"best_model_{augs_str}.pt"))
 
+
+def print_backbone_info(backbone_network):
+    # Print size of resnet in MB
+    param_size = 0
+    for param in backbone_network.parameters():
+        param_size += param.nelement() * param.element_size()
+    buffer_size = 0
+    for buffer in backbone_network.buffers():
+        buffer_size += buffer.nelement() * buffer.element_size()
+    size_all_mb = (param_size + buffer_size) / 1024 ** 2
+    print(f"Backbone model size: {size_all_mb}MB")
+    # Print number of trainable parameters
+    print(
+        f"Number of trainable parameters in backbone: "
+        f"{str(sum(p.numel() for p in backbone_network.parameters() if p.requires_grad))}"
+    )
+    # Print the model
+    print(backbone_network)
+
+
 def compute_weights(dataset_per_subject_list):
     def compute_st_deviation(data):
         assert data.shape[1] == 3
         assert len(data.shape) == 2
         std = np.std(data, axis=0)
         assert std.shape[0] == 3
-        return std.sum()/3
+        return std.sum() / 3
 
     weight_per_subject = []
     for i in range(len(dataset_per_subject_list)):
@@ -238,22 +220,24 @@ def compute_weights(dataset_per_subject_list):
         weights = torch.zeros(len(raw))
         for j in range(len(raw)):
             # raw[i] will be a vector of size (#channels, SLIDING_WINDOW_LEN)
-            weights[j] = compute_st_deviation(raw[j].numpy(force=True))
+            weights[j] = float(compute_st_deviation(raw[j].numpy(force=True)))
         weight_per_subject.append(weights)
     return weight_per_subject
 
-def compute_aug_dataset_list(augs, datasets, device):
+
+def compute_aug_dataset_list(augs, datasets):
     aug_datasets = []
     for i in range(len(datasets)):
-        aug_datasets.append(compute_aug_dataset(augs, datasets[i], device=device))
+        aug_datasets.append(compute_aug_dataset(augs, datasets[i]))
     return aug_datasets
 
-def compute_aug_dataset(augs, dataset, device):
+
+def compute_aug_dataset(augs, dataset):
     dict = {}
     for aug in augs:
         aug_train_dataset = SSLazyAugDatasetSubjectWise(
-                    dataset, aug=aug, device=device
-                )
+            dataset, aug=aug
+        )
 
         dict[aug] = aug_train_dataset
     return dict

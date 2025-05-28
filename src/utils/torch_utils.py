@@ -1,6 +1,6 @@
 import torch
 
-def get_available_device(debug=True):
+def get_available_device(debug=False):
     """
     :return: Returns the first available device from the following list: cuda, mps, cpu
     """

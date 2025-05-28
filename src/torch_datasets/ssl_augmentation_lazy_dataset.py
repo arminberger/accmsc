@@ -8,7 +8,6 @@ class SSLazyAugDatasetSubjectWise(Dataset):
         self,
         dataset,
         aug,
-        device=None,
         channels_first=True,
         memoization=True,
     ):
@@ -22,6 +21,9 @@ class SSLazyAugDatasetSubjectWise(Dataset):
             memoization:
         """
         self.raw_dataset = dataset
+        # Check if channels_first is True or False
+        if dataset.channels_first:
+            raise ValueError("channels_first not supported.")
         self.aug = aug
         self.my_channels_first = channels_first
         self.memoization = memoization

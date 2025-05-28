@@ -13,6 +13,9 @@ def gen_aug(sample, ssh_type):
     Returns:
         _type_: _description_
     """
+    # Check that last dimension is channels
+    if sample.shape[2] != 3:
+        raise ValueError("The last dimension of the sample should be channels, but got {}".format(sample.shape[2]))
     if ssh_type == 'na':
         return sample
     elif ssh_type == 'shuffle':

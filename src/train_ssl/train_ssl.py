@@ -31,9 +31,11 @@ def model_loss_augs_precomputed(
         # Check if CUDA is available
         if torch.cuda.is_available() and autocast:
             with torch.cuda.amp.autocast():
-                loss = criterion(model(x1=aug_sample1, x2=aug_sample2))
+                z1, z2 = model(x1=aug_sample1, x2=aug_sample2)
+                loss = criterion(z1, z2)
         else:
-            loss = criterion(model(x1=aug_sample1, x2=aug_sample2))
+            z1, z2 = model(x1=aug_sample1, x2=aug_sample2)
+            loss = criterion(z1, z2)
     return loss
 
 def model_loss(framework, sample, aug1, aug2, model, criterion, DEVICE):
@@ -68,23 +70,27 @@ def train_simclr_precomputed_augs_per_subject(
     autocast=False
 ):
     """
+    Train a SimCLR model with precomputed augmentations per subject.
 
-    Args:
-        train_loader: DataLoader for training data, each sample is a tuple of augmentations,
-        two of which are selected at random for each batch
-        val_loader: DataLoader for validation data, each sample is a tuple of augmentations
-        model: SimCLR model
-        epochs:
-        DEVICE:
-        batch_size:
-        checkpoint_path:
-        ntxent_criterion:
-        optimizer:
-        scheduler:
-        model_name: Name of the model to save checkpoints as
+    We further split the training set into datasets that only contain num_subjects_per_set subjects. This is so that we
+    do not contrast too many completely different subjects together.
 
-    Returns:
-
+    :param train_sets:
+    :param val_loaders:
+    :param model:
+    :param epochs:
+    :param DEVICE:
+    :param batch_size:
+    :param checkpoint_path:
+    :param ntxent_criterion:
+    :param optimizer:
+    :param scheduler:
+    :param model_name:
+    :param dataset_weights: List of weights for each sample in each dataset of train_sets.
+    :param num_subjects_per_set:
+    :param grad_checkpointing:
+    :param autocast:
+    :return:
     """
 
     # Set up local variables
@@ -100,6 +106,7 @@ def train_simclr_precomputed_augs_per_subject(
         print(f"Epoch {epoch}")
         # Train epoch
         total_train_loss = 0
+        # Shuffle the training sets and dataset_weights to have different subject groups in each epoch
         random.Random(seed + epoch).shuffle(train_sets)
         if dataset_weights is not None:
             random.Random(seed + epoch).shuffle(dataset_weights)
@@ -111,7 +118,6 @@ def train_simclr_precomputed_augs_per_subject(
             weigths_concat = None
             train_sampler = None
             if dataset_weights is not None:
-
                 weights = dataset_weights[
                     i * num_subjects_per_set : (i + 1) * num_subjects_per_set
                 ]
@@ -169,7 +175,6 @@ def train_simclr_precomputed_augs_per_subject(
                 silent=True,
             )
 
-        # TODO: Maybe add warmup
         if scheduler is not None:
             scheduler.step()
         # Save best model (with the lowest validation loss)
@@ -200,6 +205,7 @@ def train_epoch(
 
     for idx, samples in enumerate(progress):
         seed = seed + 1
+        # Sample the augmentation used for the current batch
         sample1_index, sample2_index = random.Random(seed).sample(
             range(len(samples)), k=2
         )
