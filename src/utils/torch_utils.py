@@ -1,6 +1,6 @@
 import torch
 
-def get_available_device():
+def get_available_device(debug=True):
     """
     :return: Returns the first available device from the following list: cuda, mps, cpu
     """
@@ -10,4 +10,8 @@ def get_available_device():
         device = torch.device("mps")
     else:
         device = torch.device("cpu")
+
+    if debug:
+        device = torch.device("cpu")
+
     return device
