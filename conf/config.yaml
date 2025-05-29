@@ -1,10 +1,13 @@
 defaults:
   - _self_
-  - classifier/dataset: applewatch
+
   - feature_extractor/dataset: capture24
-  - classifier/network: naive_mlp_small
   - feature_extractor/network: harnet10_untrained
+  - feature_extractor/augmentations: harnet
+
   - classifier/label_transform: identity
+  - classifier/network: naive_mlp_small
+  - classifier/dataset: applewatch
 # We mount all datasets under the download path to be able to download all of them even if they are not needed for training
   - classifier/dataset@download.applewatch: applewatch
   - classifier/dataset@download.geneactiv: geneactiv
@@ -14,8 +17,8 @@ defaults:
 # Can be 'download', 'train_classifier'
 task: train_ssl
 # Environment config
-#large_files_dir: ${hydra:runtime.cwd}
-large_files_dir: /cluster/scratch/aplanincic/accmsc
+large_files_dir: ${hydra:runtime.cwd}
+#large_files_dir: /cluster/scratch/aplanincic/accmsc
 # ML config
 lowpass_cutoff_frequency: 20
 window_length: 30

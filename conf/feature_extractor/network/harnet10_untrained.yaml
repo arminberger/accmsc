@@ -1,3 +1,4 @@
-name: harnet10_untrained
+name: resnet_harnet
 input_len_seconds: 10
 input_sample_rate: 30
+low_pass_freq: 15

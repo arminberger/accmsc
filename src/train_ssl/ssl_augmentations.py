@@ -2,6 +2,8 @@ import numpy as np
 import torch
 import scipy
 import random
+# For harnet warping
+from scipy.interpolate import CubicSpline
 
 def gen_aug(sample, ssh_type):
     """_summary_
@@ -56,6 +58,10 @@ def gen_aug(sample, ssh_type):
         return ifft_amp_phase_pert(sample)
     elif ssh_type == 'ap_f':
         return ifft_amp_phase_pert_fully(sample)
+    elif ssh_type == 'perm_harnet':
+        return permutation_harnet(sample)
+    elif ssh_type == 't_warp_harnet':
+        return time_warp_harnet(sample)
     else:
         print('The task is not available!\n')
 
@@ -114,6 +120,27 @@ def permutation(x, max_segments=5, seg_mode="random"):
             ret[i] = pat
     return torch.from_numpy(ret)
 
+def permutation_harnet(x):
+    orig_steps = np.arange(x.shape[1])
+    num_segs = np.zeros(shape=(x.shape[0]))
+    # Set all num_segs to 1
+    num_segs.fill(4)
+    ret = np.zeros_like(x)
+    for i, pat in enumerate(x):
+        if num_segs[i] > 1:
+            split_points = np.random.choice(x.shape[1] - 2, num_segs[i] - 1, replace=False)
+            split_points.sort()
+            # Check if split_points are at least 10 apart and if not repeat the process
+            while any(np.diff(split_points) < 10):
+                split_points = np.random.choice(x.shape[1] - 2, num_segs[i] - 1, replace=False)
+                split_points.sort()
+            splits = np.split(orig_steps, split_points)
+            np.random.shuffle(splits)
+            warp = np.concatenate(splits).ravel()
+            ret[i] = pat[warp, :]
+        else:
+            ret[i] = pat
+    return torch.from_numpy(ret)
 
 def resample(x):
     from scipy.interpolate import interp1d
@@ -193,6 +220,48 @@ def time_warp(X, sigma=0.2, num_knots=4):
         X_transformed[i // X.shape[2], :, i % X.shape[2]] = np.interp(time_stamps, distorted_time_stamps, X[i // X.shape[2], :, i % X.shape[2]])
     return X_transformed
 
+def time_warp_harnet(X, sigma=0.2):
+    ret = np.zeros_like(X)
+    for i, pat in enumerate(X):
+        ret[i] = DA_TimeWarp(pat, sigma=sigma)
+    return ret
+
+def DA_TimeWarp(X, sigma=0.2):
+    tt_new = DistortTimesteps(X, sigma)
+    X_new = np.zeros(X.shape)
+    x_range = np.arange(X.shape[0])
+    X_new[:, 0] = np.interp(x_range, tt_new[:, 0], X[:, 0])
+    X_new[:, 1] = np.interp(x_range, tt_new[:, 1], X[:, 1])
+    X_new[:, 2] = np.interp(x_range, tt_new[:, 2], X[:, 2])
+    return X_new
+
+def DistortTimesteps(X, sigma=0.2):
+    tt = GenerateRandomCurves(
+        X, sigma
+    )  # Regard these samples aroun 1 as time intervals
+    tt_cum = np.cumsum(tt, axis=0)  # Add intervals to make a cumulative graph
+    # Make the last value to have X.shape[0]
+    t_scale = [
+        (X.shape[0] - 1) / tt_cum[-1, 0],
+        (X.shape[0] - 1) / tt_cum[-1, 1],
+        (X.shape[0] - 1) / tt_cum[-1, 2],
+    ]
+    tt_cum[:, 0] = tt_cum[:, 0] * t_scale[0]
+    tt_cum[:, 1] = tt_cum[:, 1] * t_scale[1]
+    tt_cum[:, 2] = tt_cum[:, 2] * t_scale[2]
+    return tt_cum
+
+def GenerateRandomCurves(X, sigma=0.2, knot=4):
+    xx = (
+        np.ones((X.shape[1], 1))
+        * (np.arange(0, X.shape[0], (X.shape[0] - 1) / (knot + 1)))
+    ).transpose()
+    yy = np.random.normal(loc=1.0, scale=sigma, size=(knot + 2, X.shape[1]))
+    x_range = np.arange(X.shape[0])
+    cs_x = CubicSpline(xx[:, 0], yy[:, 0])
+    cs_y = CubicSpline(xx[:, 1], yy[:, 1])
+    cs_z = CubicSpline(xx[:, 2], yy[:, 2])
+    return np.array([cs_x(x_range), cs_y(x_range), cs_z(x_range)]).transpose()
 
 def distance(i, j, imageSize, r):
     dis_x = np.sqrt((i - imageSize[0] / 2) ** 2)
