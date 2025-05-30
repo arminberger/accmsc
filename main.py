@@ -25,7 +25,7 @@ def main(cfg: DictConfig):
                 is_zip=datasets_to_download[dataset].is_zipped,
                 url=datasets_to_download[dataset].url
             )
-    if cfg.task == "train_classifier":
+    elif cfg.task == "train_classifier":
         run_classification(
             feature_extractor_name=cfg.feature_extractor.network.name,
             classifier_name=cfg.classifier.network.name,
@@ -55,7 +55,7 @@ def main(cfg: DictConfig):
             viterbi=False,
             batch_norm_after_feature_extractor=False,
         )
-    if cfg.task == "train_ssl":
+    elif cfg.task == "train_ssl":
         print("Training SSL")
         run_simclr_cap24_weighted_subject_wise(dataset_cfg=cfg.feature_extractor.dataset,
                                                augs=cfg.feature_extractor.augmentations,
@@ -72,7 +72,8 @@ def main(cfg: DictConfig):
                                                weight_decay=True,
                                                autocast=True,
                                                normalize_data=cfg.normalize_data, )
-
+    else:
+        raise ValueError(f"Unknown task: {cfg.task}")
 
 if __name__ == "__main__":
     main()
