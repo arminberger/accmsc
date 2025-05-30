@@ -45,6 +45,14 @@ def run_simclr_cap24_weighted_subject_wise(dataset_cfg, augs, paths_cfg, low_pas
     Returns:
 
     """
+    print(f"Running self-supervised training with augmentations: {augs}, "
+          f"backbone: {backbone_name}, feature vector dim: {feature_vector_dim}, "
+          f"projection out dim: {projection_out_dim}, sampling rate: {sampling_rate}, "
+          f"low pass frequency: {low_pass_freq}, window length: {window_len}, "
+          f"num epochs: {num_epochs}, batch size: {batch_size}, num subjects: {num_subjects}, "
+          f"night only: {night_only}, grad checkpointing: {grad_checkpointing}, "
+          f"use adam: {use_adam}, weight decay: {weight_decay}, autocast: {autocast}, "
+          f"normalize data: {normalize_data}")
     DEVICE = get_available_device()
     print(f"Using device: {DEVICE}")
 
