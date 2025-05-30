@@ -61,7 +61,7 @@ def gen_aug(sample, ssh_type):
     elif ssh_type == 'perm_harnet':
         return permutation_harnet(sample)
     elif ssh_type == 't_warp_harnet':
-        return time_warp_harnet(sample)
+        return torch.from_numpy(time_warp_harnet(sample))
     else:
         print('The task is not available!\n')
 
@@ -122,7 +122,7 @@ def permutation(x, max_segments=5, seg_mode="random"):
 
 def permutation_harnet(x):
     orig_steps = np.arange(x.shape[1])
-    num_segs = np.zeros(shape=(x.shape[0]))
+    num_segs = np.zeros(shape=(x.shape[0]), dtype=int)
     # Set all num_segs to 1
     num_segs.fill(4)
     ret = np.zeros_like(x)
