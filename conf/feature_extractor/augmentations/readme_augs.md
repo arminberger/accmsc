@@ -1,0 +1,18 @@
+Possible Augmentations
+- na: No augmentation
+- shuffle: Shuffle the channels of the sample
+- jit_scal: Jitter and scale the sample
+- perm_jit: Permutation jitter of the sample
+- resample: Resample the sample
+- noise: Add noise to the sample
+- scale: Scale the sample
+- negate: Negate the sample
+- t_flip: Time flip the sample
+- rotation: Rotate the sample
+- perm: Permutation of the sample
+- t_warp: Time warp the sample
+- hfc: High-frequency component extraction
+- lfc: Low-frequency component extraction
+- p_shift: Phase shift of the sample
+- ap_p: Amplitude and phase perturbation of the sample
+- ap_f: Amplitude and phase perturbation fully of the sample

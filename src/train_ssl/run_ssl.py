@@ -3,6 +3,7 @@ import random
 import os
 import torch
 import numpy as np
+import wandb
 from src.utils import get_available_device
 from src.train_ssl import get_backbone_network, train_simclr_precomputed_augs_per_subject
 from src.models import SimCLR, NTXentLossNew
@@ -17,7 +18,8 @@ def run_simclr_cap24_weighted_subject_wise(dataset_cfg, augs, paths_cfg, low_pas
                                            num_epochs=100, batch_size=256, num_subjects=1,
                                            night_only=False, grad_checkpointing=False, linear_scaling=False,
                                            use_adam=True, weight_decay=True, autocast=False, normalize_data=False,
-                                           provided_data=None, train_val_split_ratio=0.2):
+                                           provided_data=None, train_val_split_ratio=0.2,
+                                           wandb_project="SSL-Training", wandb_run_name=None):
     """
 
     Args:
@@ -41,18 +43,32 @@ def run_simclr_cap24_weighted_subject_wise(dataset_cfg, augs, paths_cfg, low_pas
         autocast: Whether to use autocast (mixed precision training) or not.
         normalize_data: Whether to normalize the data or not.
         provided_data: Specialized argument used for efficient training of many models on the same data. More in the source/main_ss_augeval_final.py file.
+        wandb_project: Name of the wandb project to log to.
+        wandb_run_name: Custom name for the wandb run. If None, a name will be generated automatically.
 
     Returns:
 
     """
-    print(f"Running self-supervised training with augmentations: {augs}, "
-          f"backbone: {backbone_name}, feature vector dim: {feature_vector_dim}, "
-          f"projection out dim: {projection_out_dim}, sampling rate: {sampling_rate}, "
-          f"low pass frequency: {low_pass_freq}, window length: {window_len}, "
-          f"num epochs: {num_epochs}, batch size: {batch_size}, num subjects: {num_subjects}, "
-          f"night only: {night_only}, grad checkpointing: {grad_checkpointing}, "
-          f"use adam: {use_adam}, weight decay: {weight_decay}, autocast: {autocast}, "
-          f"normalize data: {normalize_data}")
+    # Initialize wandb
+    wandb.init(project=wandb_project, name=wandb_run_name, config={
+        'augs': augs,
+        'low_pass_freq': low_pass_freq,
+        'sampling_rate': sampling_rate,
+        'feature_vector_dim': feature_vector_dim,
+        'projection_out_dim': projection_out_dim,
+        'backbone_name': backbone_name,
+        'window_len': window_len,
+        'num_epochs': num_epochs,
+        'batch_size': batch_size,
+        'num_subjects': num_subjects,
+        'night_only': night_only,
+        'grad_checkpointing': grad_checkpointing,
+        'linear_scaling': linear_scaling,
+        'use_adam': use_adam,
+        'weight_decay': weight_decay,
+        'autocast': autocast,
+        'normalize_data': normalize_data
+    })
     DEVICE = get_available_device()
     print(f"Using device: {DEVICE}")
 
