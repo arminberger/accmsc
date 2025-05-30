@@ -6,6 +6,7 @@ from src.train_ssl import run_simclr_cap24_weighted_subject_wise
 from src.utils import get_available_device
 import os
 
+
 @hydra.main(config_path="conf", config_name="config", version_base=None)
 def main(cfg: DictConfig):
     for path in cfg.paths:
@@ -55,12 +56,17 @@ def main(cfg: DictConfig):
         )
     if cfg.task == "train_ssl":
         print("Training SSL")
-        run_simclr_cap24_weighted_subject_wise(dataset_cfg=cfg.feature_extractor.dataset, augs=cfg.feature_extractor.augmentations,
-                                               paths_cfg=cfg.paths, low_pass_freq=cfg.feature_extractor.network.low_pass_freq, sampling_rate=cfg.feature_extractor.network.input_sample_rate, backbone_name=cfg.feature_extractor.network.name,
-                                               window_len=cfg.feature_extractor.network.input_len_seconds, num_workers=10, num_epochs=60,
+        run_simclr_cap24_weighted_subject_wise(dataset_cfg=cfg.feature_extractor.dataset,
+                                               augs=cfg.feature_extractor.augmentations,
+                                               paths_cfg=cfg.paths,
+                                               low_pass_freq=cfg.feature_extractor.network.low_pass_freq,
+                                               sampling_rate=cfg.feature_extractor.network.input_sample_rate,
+                                               backbone_name=cfg.feature_extractor.network.name,
+                                               window_len=cfg.feature_extractor.network.input_len_seconds,
+                                               num_workers=10, num_epochs=60,
                                                batch_size=2048, num_subjects=4, grad_checkpointing=False, use_adam=True,
                                                weight_decay=True, autocast=True, normalize_data=True)
 
+
 if __name__ == "__main__":
     main()
-    
