@@ -17,11 +17,9 @@ defaults:
 # Can be 'download', 'train_classifier'
 task: train_ssl
 # Environment config
-large_files_dir: ${hydra:runtime.cwd}
-#large_files_dir: /cluster/scratch/aplanincic/accmsc
+# large_files_dir: ${hydra:runtime.cwd}
+large_files_dir: /cluster/scratch/aplanincic/accmsc
 # ML config
-lowpass_cutoff_frequency: 20
-window_length: 30
 normalize_data: false
 train_test_split: 0.2
 # Constants
