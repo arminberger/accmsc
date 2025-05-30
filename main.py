@@ -7,6 +7,8 @@ from src.utils import get_available_device
 import os
 
 
+
+
 @hydra.main(config_path="conf", config_name="config", version_base=None)
 def main(cfg: DictConfig):
     for path in cfg.paths:
@@ -76,4 +78,6 @@ def main(cfg: DictConfig):
         raise ValueError(f"Unknown task: {cfg.task}")
 
 if __name__ == "__main__":
+    # Set environment variables
+    os.environ["WANDB_MODE"] = "offline"
     main()
