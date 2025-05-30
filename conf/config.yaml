@@ -14,7 +14,7 @@ defaults:
   - classifier/dataset@download.newcastle: newcastle
   - feature_extractor/dataset@download.capture24: capture24
 
-# Can be 'download', 'train_classifier'
+# Can be 'download', 'train_classifier', 'train_ssl'
 task: train_ssl
 # Environment config
 # large_files_dir: ${hydra:runtime.cwd}
