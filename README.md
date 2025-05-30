@@ -12,3 +12,8 @@ Before running the training and evaluation, you need to download the datasets. T
 uv run python main.py task=download
 ```
 
+To run on Euler use the following command:
+
+```bash
+sbatch --job-name=uv-main --time=24:00:00 --gpus-per-node=1 --cpus-per-task=1 --mem-per-cpu=32G --output=uv-main-%j.out --wrap="uv run python main.py"
+```

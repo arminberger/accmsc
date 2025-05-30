@@ -67,7 +67,8 @@ def train_simclr_precomputed_augs_per_subject(
     dataset_weights=None,
     num_subjects_per_set=1,
     grad_checkpointing=False,
-    autocast=False
+    autocast=False,
+    wandb=None
 ):
     """
     Train a SimCLR model with precomputed augmentations per subject.
@@ -179,6 +180,12 @@ def train_simclr_precomputed_augs_per_subject(
             scheduler.step()
         # Save best model (with the lowest validation loss)
         print(f"Total Validation Loss of Epoch {epoch}: {curr_val_loss}")
+        if wandb is not None:
+            wandb.log({
+                'epoch': epoch,
+                'train_loss': total_train_loss,
+                'val_loss': curr_val_loss
+            })
 
         if curr_val_loss <= min_val_loss:
             min_val_loss = curr_val_loss

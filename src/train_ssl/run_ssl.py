@@ -9,6 +9,7 @@ from src.models import SimCLR, NTXentLossNew
 from src.data_preprocessing import make_dataset
 from src.utils import split_subject_wise
 from src.torch_datasets import SSLazyAugDatasetSubjectWise, SSRawDataset, CombinedDataset
+import wandb
 
 
 def run_simclr_cap24_weighted_subject_wise(dataset_cfg, augs, paths_cfg, low_pass_freq=15, sampling_rate=30,
@@ -45,14 +46,26 @@ def run_simclr_cap24_weighted_subject_wise(dataset_cfg, augs, paths_cfg, low_pas
     Returns:
 
     """
-    print(f"Running self-supervised training with augmentations: {augs}, "
-          f"backbone: {backbone_name}, feature vector dim: {feature_vector_dim}, "
-          f"projection out dim: {projection_out_dim}, sampling rate: {sampling_rate}, "
-          f"low pass frequency: {low_pass_freq}, window length: {window_len}, "
-          f"num epochs: {num_epochs}, batch size: {batch_size}, num subjects: {num_subjects}, "
-          f"night only: {night_only}, grad checkpointing: {grad_checkpointing}, "
-          f"use adam: {use_adam}, weight decay: {weight_decay}, autocast: {autocast}, "
-          f"normalize data: {normalize_data}")
+    # Initialize wandb
+    run = wandb.init(project='SSL Training', config={
+        'augs': augs,
+        'low_pass_freq': low_pass_freq,
+        'sampling_rate': sampling_rate,
+        'feature_vector_dim': feature_vector_dim,
+        'projection_out_dim': projection_out_dim,
+        'backbone_name': backbone_name,
+        'window_len': window_len,
+        'num_epochs': num_epochs,
+        'batch_size': batch_size,
+        'num_subjects': num_subjects,
+        'night_only': night_only,
+        'grad_checkpointing': grad_checkpointing,
+        'linear_scaling': linear_scaling,
+        'use_adam': use_adam,
+        'weight_decay': weight_decay,
+        'autocast': autocast,
+        'normalize_data': normalize_data
+    })
     DEVICE = get_available_device()
     print(f"Using device: {DEVICE}")
 
@@ -190,9 +203,11 @@ def run_simclr_cap24_weighted_subject_wise(dataset_cfg, augs, paths_cfg, low_pas
         num_subjects_per_set=num_subjects,
         grad_checkpointing=grad_checkpointing,
         autocast=autocast,
+        wandb=run
     )
     # Save the best model (best_model already is a state_dict)
     torch.save(best_model, os.path.join(paths_cfg.model_checkpoints, f"best_model_{augs_str}.pt"))
+    run.finish()
 
 
 def print_backbone_info(backbone_network):
