@@ -17,6 +17,7 @@ def main(cfg: DictConfig):
 
     if cfg.task == "download":
         datasets_to_download = cfg.download
+        print(f'Downloading datasets: {[dataset.name for dataset in datasets_to_download.values()]}')
         for dataset in datasets_to_download:
             get_dataset(
                 name=datasets_to_download[dataset].name,
