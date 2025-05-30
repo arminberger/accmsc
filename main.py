@@ -63,9 +63,14 @@ def main(cfg: DictConfig):
                                                sampling_rate=cfg.feature_extractor.network.input_sample_rate,
                                                backbone_name=cfg.feature_extractor.network.name,
                                                window_len=cfg.feature_extractor.network.input_len_seconds,
-                                               num_workers=10, num_epochs=60,
-                                               batch_size=2048, num_subjects=4, grad_checkpointing=False, use_adam=True,
-                                               weight_decay=True, autocast=True, normalize_data=True)
+                                               num_epochs=60,
+                                               batch_size=cfg.batch_size,
+                                               num_subjects=4,
+                                               grad_checkpointing=False,
+                                               use_adam=True,
+                                               weight_decay=True,
+                                               autocast=True,
+                                               normalize_data=cfg.normalize_data, )
 
 
 if __name__ == "__main__":

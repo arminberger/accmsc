@@ -8,7 +8,7 @@ defaults:
   - classifier/label_transform: identity
   - classifier/network: naive_mlp_small
   - classifier/dataset: applewatch
-# We mount all datasets under the download path to be able to download all of them even if they are not needed for training
+  # We mount all datasets under the download path to be able to download all of them even if they are not needed for training
   - classifier/dataset@download.applewatch: applewatch
   - classifier/dataset@download.geneactiv: geneactiv
   - classifier/dataset@download.newcastle: newcastle
@@ -20,8 +20,9 @@ task: train_ssl
 # large_files_dir: ${hydra:runtime.cwd}
 large_files_dir: /cluster/scratch/aplanincic/accmsc
 # ML config
-normalize_data: false
+normalize_data: true
 train_test_split: 0.2
+batch_size: 2048
 # Constants
 
 # Paths

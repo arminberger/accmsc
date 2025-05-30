@@ -13,7 +13,7 @@ from src.torch_datasets import SSLazyAugDatasetSubjectWise, SSRawDataset, Combin
 
 def run_simclr_cap24_weighted_subject_wise(dataset_cfg, augs, paths_cfg, low_pass_freq=15, sampling_rate=30,
                                            feature_vector_dim=1024, projection_out_dim=128, backbone_name="resnet_tiny",
-                                           window_len=30, num_workers=0, pretrained_simclr_dict_path=None,
+                                           window_len=30, pretrained_simclr_dict_path=None,
                                            num_epochs=100, batch_size=256, num_subjects=1,
                                            night_only=False, grad_checkpointing=False, linear_scaling=False,
                                            use_adam=True, weight_decay=True, autocast=False, normalize_data=False,
