@@ -175,17 +175,6 @@ def train_simclr_precomputed_augs_per_subject(
                 silent=True,
             )
 
-        # Log losses to wandb
-        try:
-            import wandb
-            wandb.log({
-                'epoch': epoch,
-                'train_loss': total_train_loss,
-                'val_loss': curr_val_loss
-            })
-        except ImportError:
-            pass
-
         if scheduler is not None:
             scheduler.step()
         # Save best model (with the lowest validation loss)
@@ -280,4 +269,6 @@ def compute_validation_precomputed_augs(
                         )
                         total_loss = torch.add(total_loss, loss)
     return total_loss.item()
+
+
 
