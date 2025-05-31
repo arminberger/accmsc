@@ -26,6 +26,7 @@ def unpack_capture24(dataset_path):
             subject_id = filename.split(".")[0]
             subject_id = subject_id.replace("P", "")
             subject_id = int(subject_id)
+            print("Loading csv of subject ", subject_id)
             data_pd = pd.read_csv(
                 filepath,
                 parse_dates=["time"],
@@ -37,11 +38,12 @@ def unpack_capture24(dataset_path):
                     "annotation": str,
                 },
             )
+            print("Cleaning up format of subject ", subject_id)
             data_pd.sort_index(inplace=True, ascending=True, kind="mergesort")
             data = data_pd
             data = data.drop(columns=["annotation"])
             data["subject"] = subject_id
-
+            print("Done loading subject ", subject_id)
             motion_data.append(data)
             subject_ids.append(subject_id)
     motion_data.sort(key=lambda x: x["subject"].iloc[0])
