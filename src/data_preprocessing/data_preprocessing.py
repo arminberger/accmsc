@@ -59,6 +59,8 @@ def make_dataset(
             dataset_name, dataset_path)
 
     for i in range(len(motion_data_list)):
+        # Actipy requires that the DateTimeIndex has name 'time'
+        motion_data_list[i].index.name = "time"
         motion_data_sample, _ = actipy.process(
             data=motion_data_list[i],
             sample_rate=dataset_sample_rate,
@@ -68,6 +70,7 @@ def make_dataset(
             resample_hz=target_sampling_rate,
             verbose=True,
         )
+
         win_len_samples = int(win_len_s * target_sampling_rate)
 
         if dataset_cfg.has_labels is True:
