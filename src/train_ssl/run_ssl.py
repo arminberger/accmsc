@@ -11,6 +11,7 @@ from src.utils import split_subject_wise
 from src.torch_datasets import SSLazyAugDatasetSubjectWise, SSRawDataset, CombinedDataset
 import wandb
 import inspect
+import time
 
 
 def run_simclr_cap24_weighted_subject_wise(dataset_cfg, augs, paths_cfg, low_pass_freq=15, sampling_rate=30,
@@ -52,6 +53,7 @@ def run_simclr_cap24_weighted_subject_wise(dataset_cfg, augs, paths_cfg, low_pas
     args, _, _, values = inspect.getargvalues(frame)
     input_dict = {arg: values[arg] for arg in args if arg in values}
     hashed_name = hash(str(input_dict))
+
     # Initialize wandb
     run = wandb.init(project='SSL Training', config={
         'augs': augs,
@@ -72,6 +74,7 @@ def run_simclr_cap24_weighted_subject_wise(dataset_cfg, augs, paths_cfg, low_pas
         'autocast': autocast,
         'normalize_data': normalize_data,
         'hashed_name': hashed_name,
+        'Current Time and Date': time.strftime("%m/%d/%Y %H:%M:%S", time.localtime()),
     })
     # Trim hash to 10 characters for the model name later on
     hashed_name = str(hashed_name)[:10]
