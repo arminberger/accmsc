@@ -52,7 +52,7 @@ def get_backbone_network(name, output_dim, grad_checkpointing=False):
             gradient_checkpointing=grad_checkpointing,
         )
     if name == "resnet_harnet":
-        # Expects input with size (batch_size, 3, 300)
+        # Expects input with size (batch_size, 3, 300), i.e. sampling_rate * input_len_seconds = 300
         model = Resnet(
             output_size=2, is_eva=True, resnet_version=1, epoch_len=10
         )

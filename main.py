@@ -66,7 +66,7 @@ def main(cfg: DictConfig):
                                                sampling_rate=cfg.feature_extractor.network.input_sample_rate,
                                                backbone_name=cfg.feature_extractor.network.name,
                                                window_len=cfg.feature_extractor.network.input_len_seconds,
-                                               num_epochs=60,
+                                               num_epochs=cfg.num_epochs,
                                                batch_size=cfg.batch_size,
                                                num_subjects=4,
                                                grad_checkpointing=False,

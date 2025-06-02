@@ -10,6 +10,7 @@ from src.data_preprocessing import make_dataset
 from src.utils import split_subject_wise
 from src.torch_datasets import SSLazyAugDatasetSubjectWise, SSRawDataset, CombinedDataset
 import wandb
+import inspect
 
 
 def run_simclr_cap24_weighted_subject_wise(dataset_cfg, augs, paths_cfg, low_pass_freq=15, sampling_rate=30,
@@ -46,6 +47,11 @@ def run_simclr_cap24_weighted_subject_wise(dataset_cfg, augs, paths_cfg, low_pas
     Returns:
 
     """
+    # Hash all the parameters to create a unique run name
+    frame = inspect.currentframe()
+    args, _, _, values = inspect.getargvalues(frame)
+    input_dict = {arg: values[arg] for arg in args if arg in values}
+    hashed_name = hash(str(input_dict))
     # Initialize wandb
     run = wandb.init(project='SSL Training', config={
         'augs': augs,
@@ -64,11 +70,13 @@ def run_simclr_cap24_weighted_subject_wise(dataset_cfg, augs, paths_cfg, low_pas
         'use_adam': use_adam,
         'weight_decay': weight_decay,
         'autocast': autocast,
-        'normalize_data': normalize_data
+        'normalize_data': normalize_data,
+        'hashed_name': hashed_name,
     })
+    # Trim hash to 10 characters for the model name later on
+    hashed_name = str(hashed_name)[:10]
     DEVICE = get_available_device()
     print(f"Using device: {DEVICE}")
-
     # Check if sampling rate is at least twice the low pass frequency
     if sampling_rate < 2 * low_pass_freq:
         raise ValueError(
@@ -206,7 +214,8 @@ def run_simclr_cap24_weighted_subject_wise(dataset_cfg, augs, paths_cfg, low_pas
         wandb=run
     )
     # Save the best model (best_model already is a state_dict)
-    torch.save(best_model, os.path.join(paths_cfg.model_checkpoints, f"best_model_{augs_str}.pt"))
+
+    torch.save(best_model, os.path.join(paths_cfg.model_checkpoints, f"best_model_{augs_str}_hash_{hashed_name}.pt"))
     run.finish()
 
 
