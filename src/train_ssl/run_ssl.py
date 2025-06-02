@@ -52,7 +52,8 @@ def run_simclr_cap24_weighted_subject_wise(dataset_cfg, augs, paths_cfg, low_pas
     frame = inspect.currentframe()
     args, _, _, values = inspect.getargvalues(frame)
     input_dict = {arg: values[arg] for arg in args if arg in values}
-    hashed_name = hash(str(input_dict))
+    hashed_name = abs(hash(str(input_dict)))
+
 
     # Initialize wandb
     run = wandb.init(project='SSL Training', config={
