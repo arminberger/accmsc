@@ -5,6 +5,9 @@ from src.train_classifier import run_classification
 from src.train_ssl import run_simclr_cap24_weighted_subject_wise
 from src.utils import get_available_device
 import os
+# Torch autocast has changed its interface and gives a FutureWarning
+import warnings
+warnings.simplefilter(action='ignore', category=FutureWarning)
 
 
 
