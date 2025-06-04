@@ -32,21 +32,20 @@ def main(cfg: DictConfig):
             )
     elif cfg.task == "train_classifier":
         run_classification(
-            feature_extractor_name=cfg.feature_extractor.network.name,
+            feature_extractor_name=cfg.classifier.backbone_network.name,
+            feature_extractor_local_path=cfg.paths.model_checkpoints,
             classifier_name=cfg.classifier.network.name,
             dataset_cfg=cfg.classifier.dataset,
             device=get_available_device(),
             train_label_transform_dict=cfg.classifier.label_transform.transform,
             test_label_transform_dict=cfg.classifier.label_transform.transform,
             paths_cfg=cfg.paths,
-            dataset_sampling_rate=cfg.classifier.dataset.sampling_rate,
             checkpoint_save_path=cfg.paths.model_checkpoints,
-            model_params={'augs': ['t_warp', 'lfc', 'rotation']},
-            prev_window=8 if cfg.classifier.network.name == 'lstm_classifier' else 0,
-            post_window=8 if cfg.classifier.network.name == 'lstm_classifier' else 0,
+            model_params={'augs': list(cfg.classifier.backbone_augs)},
+            prev_window=cfg.classifier.network.prev_windows if cfg.classifier.network.name == 'lstm_classifier' else 0,
+            post_window= cfg.classifier.network.post_windows if cfg.classifier.network.name == 'lstm_classifier' else 0,
             train_test_split=0.2,
             weighted_sampling=False,
-            human_act_freq_cutoff=None,
             freeze_foundational_model=True,
             precompute_features=True,
             num_epochs=100,
@@ -69,14 +68,16 @@ def main(cfg: DictConfig):
                                                sampling_rate=cfg.feature_extractor.network.input_sample_rate,
                                                backbone_name=cfg.feature_extractor.network.name,
                                                window_len=cfg.feature_extractor.network.input_len_seconds,
-                                               num_epochs=cfg.num_epochs,
-                                               batch_size=cfg.batch_size,
+                                               num_epochs=cfg.feature_extractor.ml_config.num_epochs,
+                                               batch_size=cfg.feature_extractor.ml_config.batch_size,
                                                num_subjects=4,
                                                grad_checkpointing=False,
                                                use_adam=True,
-                                               weight_decay=True,
+                                               weight_decay=cfg.feature_extractor.ml_config.weight_decay,
                                                autocast=True,
-                                               normalize_data=cfg.normalize_data, )
+                                               normalize_data=cfg.feature_extractor.ml_config.normalize_data,
+                                               train_val_split_ratio=cfg.feature_extractor.ml_config.train_test_split
+                                               )
     else:
         raise ValueError(f"Unknown task: {cfg.task}")
 

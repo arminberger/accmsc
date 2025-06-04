@@ -263,6 +263,41 @@ def get_feature_extractor(
         model.load_state_dict(sd)
         print(model)
         model = list(model.children())[0]
+    elif "resnet_harnet" == name:
+        # Load my harnet trained on custom data
+        augs = model_params["augs"]
+        # local path is only base path in this case
+        model_path = None
+        for path in os.scandir(local_path):
+            print(path.name)
+            if path.name.endswith(".pt") and path.name.startswith('best_model'):
+                # Remove best_model_ prefix
+                filename = path.name.replace('best_model_', '')
+                # Extract the characters of filename from the start to the first $ sign
+                filename = filename.split('$')[0]
+                # Check that filename is resnet_harnet
+                if filename.startswith('resnet_harnet'):
+                    if augs is not None:
+                        print(set(augs))
+                        print(set(extract_augs(path.name)))
+                        if set(augs) == set(extract_augs(path.name)):
+                            model_path = path.path
+                            filename_model = path.name
+                            break
+                    else:
+                        # Just take the first model found
+                        model_path = path.path
+                        filename_model = path.name
+        if model_path is None:
+            raise ValueError("No model found with the specified augmentations")
+        sampling_rate, input_len_sec, output_len = 30, 10, 1024
+        # Get the backbone network
+        backbone_output_dim = 1024
+        backbone_name = "resnet_harnet"
+        projection_output_dim = 128
+        model = load_own_simclr(
+            backbone_name, model_path, backbone_output_dim, projection_output_dim
+        )
     elif "plain_resnet" == name:
         """
         If model_params is not None, it should be an integer with the input length of the motion data in seconds
@@ -395,8 +430,9 @@ def load_own_simclr(backbone_name, local_path, output_dim, proj_dim):
         backbone_output_dim=output_dim,
         projector_output_dim=proj_dim,
     )
+    loaded = torch.load(local_path, map_location=torch.device("cpu"))
     model.load_state_dict(
-        torch.load(local_path, map_location=torch.device("cpu"))["model_state_dict"]
+        torch.load(local_path, map_location=torch.device("cpu"))
     )
     model = model.backbone
     return model

@@ -18,7 +18,6 @@ def run_classification(
     device,
     train_label_transform_dict,
     test_label_transform_dict,
-    dataset_sampling_rate,
     checkpoint_save_path,
     paths_cfg,
     model_params=None,

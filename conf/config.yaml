@@ -1,13 +1,19 @@
 defaults:
   - _self_
 
+  # Here we can configure the settings for a feature extractor training run
   - feature_extractor/dataset: capture24
   - feature_extractor/network: harnet10_untrained
   - feature_extractor/augmentations: harnet
+  - feature_extractor/ml_config: default
 
+  # Here we can configure the settings for a classifier training run
   - classifier/label_transform: identity
   - classifier/network: naive_mlp_small
   - classifier/dataset: applewatch
+  - feature_extractor/augmentations@classifier.backbone_augs: best_bsc
+  - feature_extractor/network@classifier.backbone_network: harnet10_untrained
+
   # We mount all datasets under the download path to be able to download all of them even if they are not needed for training
   - classifier/dataset@download.applewatch: applewatch
   - classifier/dataset@download.geneactiv: geneactiv
@@ -15,16 +21,10 @@ defaults:
   - feature_extractor/dataset@download.capture24: capture24
 
 # Can be 'download', 'train_classifier', 'train_ssl'
-task: train_ssl
+task: train_classifier
 # Environment config
-# large_files_dir: ${hydra:runtime.cwd}
-large_files_dir: /cluster/scratch/aplanincic/accmsc
-# ML config
-normalize_data: true
-train_test_split: 0.2
-batch_size: 2048
-num_epochs: 100
-# Constants
+large_files_dir: ${hydra:runtime.cwd}
+# large_files_dir: /cluster/scratch/aplanincic/accmsc
 
 # Paths
 paths:

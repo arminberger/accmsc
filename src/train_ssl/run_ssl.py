@@ -19,7 +19,7 @@ def run_simclr_cap24_weighted_subject_wise(dataset_cfg, augs, paths_cfg, low_pas
                                            window_len=30, pretrained_simclr_dict_path=None,
                                            num_epochs=100, batch_size=256, num_subjects=1,
                                            night_only=False, grad_checkpointing=False, linear_scaling=False,
-                                           use_adam=True, weight_decay=True, autocast=False, normalize_data=False,
+                                           use_adam=True, weight_decay=0.0001, autocast=False, normalize_data=False,
                                            provided_data=None, train_val_split_ratio=0.2):
     """
 
@@ -152,7 +152,7 @@ def run_simclr_cap24_weighted_subject_wise(dataset_cfg, augs, paths_cfg, low_pas
     k_factor = math.ceil(batch_size / 256)
     learning_rate = learning_rate if not linear_scaling else learning_rate * k_factor
     optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate,
-                                 weight_decay=0 if not weight_decay else 1e-4) if use_adam else torch.optim.SGD(
+                                 weight_decay=weight_decay) if use_adam else torch.optim.SGD(
         model.parameters(), lr=learning_rate, momentum=0.9, weight_decay=1e-4)
 
     # Use warmup scheduler
@@ -219,7 +219,7 @@ def run_simclr_cap24_weighted_subject_wise(dataset_cfg, augs, paths_cfg, low_pas
     )
     # Save the best model (best_model already is a state_dict)
 
-    torch.save(best_model, os.path.join(paths_cfg.model_checkpoints, f"best_model_{augs_str}_hash_{hashed_name}.pt"))
+    torch.save(best_model, os.path.join(paths_cfg.model_checkpoints, f"best_model_backbone_{backbone_name}_{augs_str}_hash_{hashed_name}.pt"))
     run.finish()
 
 
