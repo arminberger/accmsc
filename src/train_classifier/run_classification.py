@@ -138,9 +138,7 @@ def run_classification(
         dropout=classifier_drouput,
         batch_norm_after_feature_extractor=batch_norm_after_feature_extractor,
     )
-    summary_string += (
-        f"feature_extractor_filename: \t \t \t {feature_extractor_filename} \n"
-    )
+
     if human_act_freq_cutoff is None:
         human_act_freq_cutoff = math.floor(sampling_rate / 2)
 
