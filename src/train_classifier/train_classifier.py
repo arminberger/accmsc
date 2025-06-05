@@ -21,7 +21,7 @@ def train_model(
     val_dataloaders,
     checkpoint_save_name,
     checkpoint_save_path,
-    writer,
+    wandb_run,
     device,
     labels_transform_dict,
     num_epochs=100,
@@ -64,7 +64,7 @@ def train_model(
         print(f"Epoch {t + 1}\n-------------------------------")
         train_loss = train_loop(train_dataloader, my_model, device, loss_fn, optimizer)
 
-        writer.add_scalar("Training Loss", train_loss, t)
+        wandb_run.log({"Training Loss": train_loss})
 
         """loss, acc, balanced_acc = test_loop(
             val_dataloader, my_model, device, loss_fn, num_classes
@@ -104,7 +104,8 @@ def train_model(
             writer.add_scalar(
                 f"Validation Balanced F1 (Fold {num_fold})", val_balanced_f1, t
             )"""
-            writer.add_scalar(f"Validation Kappa (Fold {num_fold})", val_kappa, t)
+            # writer.add_scalar(f"Validation Kappa (Fold {num_fold})", val_kappa, t)
+            wandb_run.log({f"Validation Kappa (Fold {num_fold})": val_kappa}, step=t)
 
         if t % 10 == 0:
             filename = f"{checkpoint_save_name}_epoch_{str(t)}.pth"
@@ -197,7 +198,8 @@ def train_model(
         convert_sequence=get_obs,
         dataloader_per_subject=True,
     )
-    writer.add_text("Best Kappa Model Report", report, best_kappa_epoch)
+    wandb_run.log({"Best Kappa Model Report": report})
+
     print(report)
 
     print("Done!")
