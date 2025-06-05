@@ -7,9 +7,10 @@ from src.train_classifier import get_full_classification_model
 import random
 from torch.utils.data import DataLoader
 import numpy as np
-from torch.utils.tensorboard import SummaryWriter
 from sklearn.model_selection import KFold
 from src.train_classifier import train_model
+import wandb
+import time
 
 def run_classification(
     feature_extractor_name,
@@ -71,34 +72,35 @@ def run_classification(
     Returns:
 
     """
+
+
     dataset_name = dataset_cfg.name
     # Add all the parameters to the tensorboard writer
-    writer = SummaryWriter()
-    summary_string = (
-        f"Summary of the run: \n"
-        f"feature_extractor_name: \t \t \t {feature_extractor_name} \n"
-        f"classifier_name: \t \t \t {classifier_name} \n"
-        f"dataset_name: \t \t \t {dataset_name} \n"
-        f"model_params: \t \t \t {model_params} \n"
-        f"prev_window: \t \t \t {prev_window} \n"
-        f"post_window: \t \t \t {post_window} \n"
-        f"train_test_split: \t \t \t {train_test_split} \n"
-        f"weighted_sampling: \t \t \t {weighted_sampling} \n"
-        f"human_act_freq_cutoff: \t \t \t {human_act_freq_cutoff} \n"
-        f"freeze_foundational_model: \t \t \t {freeze_foundational_model} \n"
-        f"precompute_features: \t \t \t {precompute_features} \n"
-        f"num_epochs: \t \t \t {num_epochs} \n"
-        f"seed: \t \t \t {seed} \n"
-        f"normalize_data: \t \t \t {normalize_data} \n"
-        f"classifier_drouput: \t \t \t {classifier_drouput} \n"
-        f"cross_validation: \t \t \t {cross_validation} \n"
-        f"looocv: \t \t \t {looocv} \n"
-        f"weight_decay: \t \t \t {weight_decay} \n"
-        f"do_select_model: \t \t \t {do_select_model} \n"
-        f"viterbi: \t \t \t {viterbi} \n"
-        f"batch_norm_after_feature_extractor: \t \t \t {batch_norm_after_feature_extractor} \n"
 
-    )
+    wandb_run = wandb.init(project='Classifier Training', config={
+        'feature_extractor_name': feature_extractor_name,
+        'classifier_name': classifier_name,
+        'dataset_name': dataset_name,
+        'model_params': model_params,
+        'prev_window': prev_window,
+        'post_window': post_window,
+        'train_test_split': train_test_split,
+        'weighted_sampling': weighted_sampling,
+        'human_act_freq_cutoff': human_act_freq_cutoff,
+        'freeze_foundational_model': freeze_foundational_model,
+        'precompute_features': precompute_features,
+        'num_epochs': num_epochs,
+        'seed': seed,
+        'normalize_data': normalize_data,
+        'classifier_drouput': classifier_drouput,
+        'cross_validation': cross_validation,
+        'looocv': looocv,
+        'weight_decay': weight_decay,
+        'do_select_model': do_select_model,
+        'viterbi': viterbi,
+        'batch_norm_after_feature_extractor': batch_norm_after_feature_extractor,
+        'Current Time and Date': time.strftime("%m/%d/%Y %H:%M:%S", time.localtime()),
+    })
 
     torch.manual_seed(seed)
 
@@ -195,8 +197,6 @@ def run_classification(
     except:
         pass
 
-    writer.add_text("Summary", summary_string)
-    print(summary_string)
 
     if looocv:
         f1s = []
@@ -287,7 +287,7 @@ def run_classification(
                 checkpoint_save_name=checkpoint_save_name,
                 checkpoint_save_path=checkpoint_save_path,
                 num_epochs=num_epochs,
-                writer=writer,
+                wandb_run=wandb_run,
                 device=device,
                 num_fold=i,
                 weight_decay=weight_decay,
@@ -308,8 +308,14 @@ def run_classification(
         kappa_std = np.std(kappas)
         balacc_mean = np.mean(balaccs)
         balacc_std = np.std(balaccs)
-        looocv_result = f"LOOOCV results: \n f1: {f1_mean} +/- {f1_std} \n kappa: {kappa_mean} +/- {kappa_std} \n balacc: {balacc_mean} +/- {balacc_std}"
-        writer.add_text("Leave one out cross validation results", looocv_result)
+        wandb_run.log({
+            "LOOOCV f1 mean": f1_mean,
+            "LOOOCV f1 std": f1_std,
+            "LOOOCV kappa mean": kappa_mean,
+            "LOOOCV kappa std": kappa_std,
+            "LOOOCV balacc mean": balacc_mean,
+            "LOOOCV balacc std": balacc_std,
+        })
 
     elif cross_validation > 0:
 
@@ -410,7 +416,7 @@ def run_classification(
                 checkpoint_save_name=checkpoint_save_name_k,
                 checkpoint_save_path=checkpoint_save_path,
                 num_epochs=num_epochs,
-                writer=writer,
+                wandb_run=wandb_run,
                 device=device,
                 num_fold=k,
                 weight_decay=weight_decay,
@@ -436,7 +442,14 @@ def run_classification(
         cross_validation_result = f"Cross validation results: \n f1: {f1_mean} +/- {f1_std} \n kappa: {kappa_mean} +/- {kappa_std} \n balacc: {balacc_mean} +/- {balacc_std}"
         print(cross_validation_result)
         print(reports)
-        writer.add_text("Cross validation results", cross_validation_result)
+        wandb_run.log({
+            "Cross validation f1 mean": f1_mean,
+            "Cross validation f1 std": f1_std,
+            "Cross validation kappa mean": kappa_mean,
+            "Cross validation kappa std": kappa_std,
+            "Cross validation balacc mean": balacc_mean,
+            "Cross validation balacc std": balacc_std,
+        })
 
     else:
         # Split data into train_list and test_list
@@ -479,14 +492,14 @@ def run_classification(
             checkpoint_save_name=checkpoint_save_name,
             checkpoint_save_path=checkpoint_save_path,
             num_epochs=num_epochs,
-            writer=writer,
+            wandb_run=wandb_run,
             device=device,
             num_fold=0,
             weight_decay=weight_decay,
             labels_transform_dict=test_label_transform_dict,
         )
 
-    writer.close()
+    wandb_run.finish(0)
 
 
 def get_weighted_sampler(train):
