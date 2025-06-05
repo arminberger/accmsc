@@ -23,3 +23,9 @@ To train with e.g. different augmentation settings, pass this command as the arg
 ```bash
 uv run python main.py feature_extractor/augmentations=best_bsc
 ```
+
+To specify which augmentations to look for during classification, one can use the files specified in `feature_extractor/augmentations`:
+
+```bash
+uv run python main.py feature_extractor/augmentations@classifier.backbone_augs=harnet
+```
