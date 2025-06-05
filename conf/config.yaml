@@ -29,5 +29,8 @@ large_files_dir: ${hydra:runtime.cwd}
 # Paths
 paths:
   datasets: ${large_files_dir}/data/raw
+  trained_model_checkpoints: ${hydra:runtime.cwd}/trained_checkpoints
   model_checkpoints: ${large_files_dir}/checkpoints
+  ssl_model_checkpoints: ${paths.model_checkpoints}/ssl
+  classifier_model_checkpoints: ${paths.model_checkpoints}/classifier
   processed_data: ${large_files_dir}/data/processed

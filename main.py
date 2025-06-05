@@ -33,14 +33,14 @@ def main(cfg: DictConfig):
     elif cfg.task == "train_classifier":
         run_classification(
             feature_extractor_name=cfg.classifier.backbone_network.name,
-            feature_extractor_local_path=cfg.paths.model_checkpoints,
+            feature_extractor_local_path=cfg.paths.trained_model_checkpoints,
             classifier_name=cfg.classifier.network.name,
             dataset_cfg=cfg.classifier.dataset,
             device=get_available_device(),
             train_label_transform_dict=cfg.classifier.label_transform.transform,
             test_label_transform_dict=cfg.classifier.label_transform.transform,
             paths_cfg=cfg.paths,
-            checkpoint_save_path=cfg.paths.model_checkpoints,
+            checkpoint_save_path=cfg.paths.classifier_model_checkpoints,
             model_params={'augs': list(cfg.classifier.backbone_augs)},
             prev_window=cfg.classifier.network.prev_windows if cfg.classifier.network.name == 'lstm_classifier' else 0,
             post_window= cfg.classifier.network.post_windows if cfg.classifier.network.name == 'lstm_classifier' else 0,

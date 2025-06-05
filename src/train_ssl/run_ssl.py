@@ -202,7 +202,7 @@ def run_simclr_cap24_weighted_subject_wise(dataset_cfg, augs, paths_cfg, low_pas
     best_model = train_simclr_precomputed_augs_per_subject(
         DEVICE=DEVICE,
         batch_size=batch_size,
-        checkpoint_path=paths_cfg.model_checkpoints,
+        checkpoint_path=paths_cfg.ssl_model_checkpoints,
         train_sets=train_sets,
         val_loaders=val_loaders,
         model=model,
@@ -219,7 +219,7 @@ def run_simclr_cap24_weighted_subject_wise(dataset_cfg, augs, paths_cfg, low_pas
     )
     # Save the best model (best_model already is a state_dict)
 
-    torch.save(best_model, os.path.join(paths_cfg.model_checkpoints, f"best_model_backbone_{backbone_name}_{augs_str}_hash_{hashed_name}.pt"))
+    torch.save(best_model, os.path.join(paths_cfg.ssl_model_checkpoints, f"best_model_backbone_{backbone_name}_{augs_str}_hash_{hashed_name}.pt"))
     run.finish()
 
 

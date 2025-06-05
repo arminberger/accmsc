@@ -172,7 +172,6 @@ def get_feature_extractor(
     name,
     local_path,
     freeze=False,
-    repo=None,
     model_params=None,
     return_filename=False,
     batch_norm_after_feature_extractor=False,
@@ -189,16 +188,13 @@ def get_feature_extractor(
 
     if 'harnet30' == name:
         sampling_rate, input_len_sec, output_len = 30, 30, 1024
-        repo = "OxWearables/ssl-wearables"
-        if local_path is not None:
-            harnet30 = torch.hub.load(
-                local_path, "harnet30", class_num=5, pretrained=True, source="local"
-            )
-        else:
-            harnet30 = torch.hub.load(repo, "harnet30", class_num=5, pretrained=True)
+        local_path = os.path.join(local_path, 'harnet30_ukb')
+        harnet30 = torch.hub.load(
+            local_path, "harnet30", class_num=5, pretrained=True, source="local"
+        )
         model = list(harnet30.children())[0]
     elif "harnet10_cap24" == name:
-
+        local_path = os.path.join(local_path, 'harnet10_cap24.mdl')
         sampling_rate, input_len_sec, output_len = 30, 10, 1024
 
         model = Resnet(
@@ -226,10 +222,7 @@ def get_feature_extractor(
         print(model)
         model = list(model.children())[0]
     elif "harnet10_ukb" == name:
-        if local_path is None:
-            raise ValueError(
-                "Local path must be specified for " + name + " feature extractor"
-            )
+        local_path = os.path.join(local_path, 'harnet10_ukb.mdl')
         sampling_rate, input_len_sec, output_len = 30, 10, 1024
 
         model = Resnet(
@@ -264,7 +257,7 @@ def get_feature_extractor(
         print(model)
         model = list(model.children())[0]
     elif "resnet_harnet" == name:
-        # Load my harnet trained on custom data
+        # Load harnet trained by me on custom data and augs
         augs = model_params["augs"]
         # local path is only base path in this case
         model_path = None
