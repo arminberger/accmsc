@@ -30,6 +30,4 @@ To specify which augmentations to look for during classification, one can use th
 uv run python main.py feature_extractor/augmentations@classifier.backbone_augs=harnet
 ```
 
-To train a classifier using a backbone that was trained using this projects self-supervised learning, copy the best_model_... file (e.g. best_model_resnet_harnet_$rotation$_$lfc$_$t_warp_harnet$_hash_2621969038.pt) to the checkpoints directory and run the following command:
-
-```bash
+To train a classifier using a backbone that was trained using this projects self-supervised learning, copy the `best_model_...` file (e.g. `best_model_resnet_harnet_$rotation$_$lfc$_$t_warp_harnet$_hash_2621969038.pt`) to the trained_checkpoints directory.

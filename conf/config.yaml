@@ -9,10 +9,10 @@ defaults:
 
   # Here we can configure the settings for a classifier training run
   - classifier/label_transform: identity
-  - classifier/network: naive_mlp_small
+  - classifier/network: lstm
   - classifier/dataset: applewatch
   - feature_extractor/augmentations@classifier.backbone_augs: best_bsc
-  - feature_extractor/network@classifier.backbone_network: harnet10_untrained
+  - feature_extractor/network@classifier.backbone_network: harnet30
 
   # We mount all datasets under the download path to be able to download all of them even if they are not needed for training
   - classifier/dataset@download.applewatch: applewatch

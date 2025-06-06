@@ -163,6 +163,7 @@ def has_good_label(window, labels):
     if label_start == -1 or label_end == -1:
         print("Dropped window with label -1")
         return False
+    return True
 
 def load_preprocessed_dataset(
         dataset_name, has_labels, low_pass_filter_freq, model_sampling_rate, win_len_s, normalize_data, cache_path
