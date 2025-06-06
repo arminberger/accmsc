@@ -24,8 +24,8 @@ defaults:
 # Can be 'download', 'train_classifier', 'train_ssl'
 task: train_classifier
 # Environment config
-large_files_dir: ${hydra:runtime.cwd}
-# large_files_dir: /cluster/scratch/aplanincic/accmsc
+# large_files_dir: ${hydra:runtime.cwd}
+large_files_dir: /cluster/scratch/aplanincic/accmsc
 
 # Paths
 paths:
