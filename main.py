@@ -83,5 +83,5 @@ def main(cfg: DictConfig):
 
 if __name__ == "__main__":
     # Set environment variables
-    os.environ["WANDB_MODE"] = "offline"
+    # os.environ["WANDB_MODE"] = "offline"
     main()

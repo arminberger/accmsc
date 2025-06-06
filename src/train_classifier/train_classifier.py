@@ -64,6 +64,7 @@ def train_model(
         print(f"Epoch {t + 1}\n-------------------------------")
         train_loss = train_loop(train_dataloader, my_model, device, loss_fn, optimizer)
 
+        print(f"[WANDB LOG] Training Loss at step {t}")
         wandb_run.log({"Training Loss": train_loss})
 
         """loss, acc, balanced_acc = test_loop(
@@ -105,6 +106,7 @@ def train_model(
                 f"Validation Balanced F1 (Fold {num_fold})", val_balanced_f1, t
             )"""
             # writer.add_scalar(f"Validation Kappa (Fold {num_fold})", val_kappa, t)
+            print(f"[WANDB LOG] Validation Kappa (Fold {num_fold}) at step {t}")
             wandb_run.log({f"Validation Kappa (Fold {num_fold})": val_kappa}, step=t)
 
         if t % 10 == 0:
@@ -198,6 +200,7 @@ def train_model(
         convert_sequence=get_obs,
         dataloader_per_subject=True,
     )
+    print(f"[WANDB LOG] Best Kappa Model Report (after all epochs)")
     wandb_run.log({"Best Kappa Model Report": report})
 
     print(report)

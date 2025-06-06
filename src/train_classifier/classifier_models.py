@@ -4,6 +4,7 @@ import torch
 from src.models import Resnet, RNNModel, LSTMModel, SimCLR
 from src.train_ssl import get_backbone_network as get_ssl_model
 from torch import nn
+import zipfile
 
 def get_full_classification_model(
     feature_extractor_name,
@@ -188,7 +189,12 @@ def get_feature_extractor(
 
     if 'harnet30' == name:
         sampling_rate, input_len_sec, output_len = 30, 30, 1024
+        zip_path = os.path.join(local_path, 'harnet30_ukb.zip')
+        # unzip the zip file to a folder with the same name
+        with zipfile.ZipFile(zip_path, 'r') as zip_ref:
+            zip_ref.extractall(local_path)
         local_path = os.path.join(local_path, 'harnet30_ukb')
+
         harnet30 = torch.hub.load(
             local_path, "harnet30", class_num=5, pretrained=True, source="local"
         )
