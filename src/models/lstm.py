@@ -61,11 +61,13 @@ class LSTMModel(nn.Module):
             else hidden_dim * self.d_param * sequence_length
         )
         self.linear_classifier = nn.Sequential(
-            nn.Linear(output_size, 512),
+            nn.Linear(output_size, 256),
             nn.ReLU(),
-            nn.Linear(512, 512),
+            nn.Dropout(0.5),
+            nn.Linear(256, 256),
             nn.ReLU(),
-            nn.Linear(512, num_classes),
+            nn.Dropout(0.5),
+            nn.Linear(256, num_classes),
         )
 
     def forward(self, x):

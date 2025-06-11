@@ -1,4 +1,4 @@
-name: naive_mlp
-prev_windows: 0
+name: asleep_lstm
+prev_windows: 180
 post_windows: 0
 clip_gradients: false

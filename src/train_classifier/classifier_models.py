@@ -2,19 +2,17 @@ import os
 import re
 import torch
 from src.models import Resnet, RNNModel, LSTMModel, SimCLR
-from src.train_ssl import get_backbone_network as get_ssl_model
+from src.train_ssl import get_backbone_network
 from torch import nn
 import zipfile
 
 def get_full_classification_model(
     feature_extractor_name,
-    classifier_name,
+    classifier_cfg,
     num_classes,
     device,
     feature_extractor_local_path=None,
     model_params=None,
-    prev_window=0,
-    post_window=0,
     freeze_foundational_model=False,
     assemble_feature_extractor=True,
     return_feature_ext_filename=False,
@@ -34,6 +32,10 @@ def get_full_classification_model(
     Returns:
 
     """
+    prev_window = classifier_cfg.prev_windows
+    post_window = classifier_cfg.post_windows
+    classifier_name = classifier_cfg.name
+    clip_gradients = classifier_cfg.clip_gradients
     (
         feature_extractor,
         sampling_rate,
@@ -58,6 +60,7 @@ def get_full_classification_model(
             feature_extractor=feature_extractor,
             device=device,
             dropout=dropout,
+            clip_gradients=clip_gradients,
         )
     else:
         my_model = get_classification_model(
@@ -69,6 +72,7 @@ def get_full_classification_model(
             feature_extractor=None,
             device=device,
             dropout=dropout,
+            clip_gradients=clip_gradients,
         )
 
     print(my_model)
@@ -100,6 +104,7 @@ def get_classification_model(
     post_window=0,
     feature_extractor=None,
     dropout=0,
+    clip_gradients=False,
 ):
     """
 
@@ -162,10 +167,27 @@ def get_classification_model(
             dropout=dropout,
             num_layers=2,
         )
+    elif name == 'asleep_lstm':
+        model = LSTMModel(
+            input_size=feature_ext_output_size,
+            hidden_dim=128,
+            num_classes=num_classes,
+            device=device,
+            feature_extractor=feature_extractor,
+            use_all_hidden=False,
+            bidireactional=True,
+            sequence_length=prev_window + post_window + 1,
+            dropout=dropout,
+            num_layers=2,
+        )
     else:
         raise ValueError(
             f"Classifier name {name} not recognized."
         )
+    if clip_gradients:
+        # Clip gradients to avoid exploding gradients
+        for p in model.parameters():
+            p.register_hook(lambda grad: torch.clamp(grad, -1, 1))
     return model
 
 
@@ -262,7 +284,7 @@ def get_feature_extractor(
         model.load_state_dict(sd)
         print(model)
         model = list(model.children())[0]
-    elif "resnet_harnet" == name:
+    elif "harnet10_untrained" == name:
         # Load harnet trained by me on custom data and augs
         augs = model_params["augs"]
         # local path is only base path in this case
@@ -275,7 +297,7 @@ def get_feature_extractor(
                 # Extract the characters of filename from the start to the first $ sign
                 filename = filename.split('$')[0]
                 # Check that filename is resnet_harnet
-                if filename.startswith('resnet_harnet'):
+                if filename.startswith('harnet10_untrained'):
                     if augs is not None:
                         print(set(augs))
                         print(set(extract_augs(path.name)))
@@ -292,7 +314,7 @@ def get_feature_extractor(
         sampling_rate, input_len_sec, output_len = 30, 10, 1024
         # Get the backbone network
         backbone_output_dim = 1024
-        backbone_name = "resnet_harnet"
+        backbone_name = "harnet10_untrained"
         projection_output_dim = 128
         model = load_own_simclr(
             backbone_name, model_path, backbone_output_dim, projection_output_dim
@@ -423,7 +445,7 @@ def extract_augs(file_name):
 
 
 def load_own_simclr(backbone_name, local_path, output_dim, proj_dim):
-    backbone = get_ssl_model(backbone_name, output_dim)
+    backbone = get_backbone_network(backbone_name, output_dim)
     model = SimCLR(
         backbone=backbone,
         backbone_output_dim=output_dim,

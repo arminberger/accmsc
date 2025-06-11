@@ -14,7 +14,7 @@ import time
 
 def run_classification(
     feature_extractor_name,
-    classifier_name,
+    classifier_cfg,
     dataset_cfg,
     device,
     train_label_transform_dict,
@@ -23,8 +23,6 @@ def run_classification(
     paths_cfg,
     model_params=None,
     feature_extractor_local_path=None,
-    prev_window=0,
-    post_window=0,
     train_test_split=0.2,
     weighted_sampling=False,
     human_act_freq_cutoff=None,
@@ -73,8 +71,10 @@ def run_classification(
 
     """
 
-
+    classifier_name = classifier_cfg.name
     dataset_name = dataset_cfg.name
+    prev_window = classifier_cfg.prev_windows
+    post_window = classifier_cfg.post_windows
     # Add all the parameters to the tensorboard writer
 
     wandb_run = wandb.init(project='Classifier Training', config={
@@ -82,8 +82,7 @@ def run_classification(
         'classifier_name': classifier_name,
         'dataset_name': dataset_name,
         'model_params': model_params,
-        'prev_window': prev_window,
-        'post_window': post_window,
+        'classifier_cfg': classifier_cfg,
         'train_test_split': train_test_split,
         'weighted_sampling': weighted_sampling,
         'human_act_freq_cutoff': human_act_freq_cutoff,
@@ -127,13 +126,11 @@ def run_classification(
         feature_extractor_name=feature_extractor_name,
         feature_extractor_local_path=feature_extractor_local_path,
         model_params=model_params,
-        classifier_name=classifier_name,
+        classifier_cfg=classifier_cfg,
         device=device,
         num_classes=num_classes,
         freeze_foundational_model=freeze_foundational_model,
         assemble_feature_extractor=not precompute_features,
-        prev_window=prev_window,
-        post_window=post_window,
         return_feature_ext_filename=True,
         dropout=classifier_drouput,
         batch_norm_after_feature_extractor=batch_norm_after_feature_extractor,
@@ -215,13 +212,11 @@ def run_classification(
                 feature_extractor_name=feature_extractor_name,
                 feature_extractor_local_path=feature_extractor_local_path,
                 model_params=model_params,
-                classifier_name=classifier_name,
+                classifier_cfg=classifier_cfg,
                 device=device,
                 num_classes=num_classes,
                 freeze_foundational_model=freeze_foundational_model,
                 assemble_feature_extractor=not precompute_features,
-                prev_window=prev_window,
-                post_window=post_window,
                 return_feature_ext_filename=True,
                 dropout=classifier_drouput,
                 batch_norm_after_feature_extractor=batch_norm_after_feature_extractor,
@@ -337,13 +332,11 @@ def run_classification(
                 feature_extractor_name=feature_extractor_name,
                 feature_extractor_local_path=feature_extractor_local_path,
                 model_params=model_params,
-                classifier_name=classifier_name,
+                classifier_cfg=classifier_cfg,
                 device=device,
                 num_classes=num_classes,
                 freeze_foundational_model=freeze_foundational_model,
                 assemble_feature_extractor=not precompute_features,
-                prev_window=prev_window,
-                post_window=post_window,
                 return_feature_ext_filename=True,
                 dropout=classifier_drouput,
                 batch_norm_after_feature_extractor=batch_norm_after_feature_extractor,

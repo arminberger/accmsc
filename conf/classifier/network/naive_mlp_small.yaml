@@ -1,1 +1,4 @@
 name: naive_mlp_small
+prev_windows: 0
+post_windows: 0
+clip_gradients: false

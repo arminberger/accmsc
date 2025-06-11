@@ -1,3 +1,4 @@
 name: lstm_classifier
 prev_windows: 8
 post_windows: 8
+clip_gradients: false

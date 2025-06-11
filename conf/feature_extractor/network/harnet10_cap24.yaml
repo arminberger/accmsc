@@ -1,0 +1,4 @@
+name: harnet10_cap24
+input_len_seconds: 30
+input_sample_rate: 30
+low_pass_freq: 15

@@ -34,7 +34,7 @@ def main(cfg: DictConfig):
         run_classification(
             feature_extractor_name=cfg.classifier.backbone_network.name,
             feature_extractor_local_path=cfg.paths.trained_model_checkpoints,
-            classifier_name=cfg.classifier.network.name,
+            classifier_cfg=cfg.classifier.network,
             dataset_cfg=cfg.classifier.dataset,
             device=get_available_device(),
             train_label_transform_dict=cfg.classifier.label_transform,
@@ -42,15 +42,13 @@ def main(cfg: DictConfig):
             paths_cfg=cfg.paths,
             checkpoint_save_path=cfg.paths.classifier_model_checkpoints,
             model_params={'augs': list(cfg.classifier.backbone_augs)},
-            prev_window=cfg.classifier.network.prev_windows if cfg.classifier.network.name == 'lstm_classifier' else 0,
-            post_window= cfg.classifier.network.post_windows if cfg.classifier.network.name == 'lstm_classifier' else 0,
             train_test_split=0.2,
             weighted_sampling=False,
             freeze_foundational_model=True,
             precompute_features=True,
-            num_epochs=100,
+            num_epochs=cfg.classifier.ml_config.num_epochs,
             seed=46012094831,
-            normalize_data=False,
+            normalize_data=True,
             classifier_drouput=0,
             cross_validation=0,
             looocv=False,
@@ -83,5 +81,5 @@ def main(cfg: DictConfig):
 
 if __name__ == "__main__":
     # Set environment variables
-    os.environ["WANDB_MODE"] = "offline"
+    # os.environ["WANDB_MODE"] = "offline"
     main()
