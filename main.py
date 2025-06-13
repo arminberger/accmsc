@@ -14,6 +14,10 @@ warnings.simplefilter(action='ignore', category=FutureWarning)
 
 @hydra.main(config_path="conf", config_name="config", version_base=None)
 def main(cfg: DictConfig):
+    # Print all paths for debugging
+    print("Configuration paths:")
+    for path, value in cfg.paths.items():
+        print(f"{path}: {value}")
     for path in cfg.paths:
         # Check if the path exists and create it if it doesn't
         if not os.path.exists(cfg.paths[path]):
@@ -81,5 +85,5 @@ def main(cfg: DictConfig):
 
 if __name__ == "__main__":
     # Set environment variables
-    # os.environ["WANDB_MODE"] = "offline"
+    os.environ["WANDB_MODE"] = "offline"
     main()
