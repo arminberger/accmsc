@@ -3,7 +3,7 @@ import torch
 from src.data_preprocessing import make_dataset
 from src.utils import split_subject_wise
 from src.torch_datasets import AccDataset, PrecomputedFeaturesDataset, ListDataset
-from src.train_classifier import get_full_classification_model
+from src.train_classifier import get_full_classification_model, get_feature_extractor
 import random
 from torch.utils.data import DataLoader
 import numpy as np
@@ -75,7 +75,7 @@ def run_classification(
 
 
     torch.manual_seed(seed)
-
+    dataset_name = dataset_cfg.name
     if not freeze_foundational_model and precompute_features:
         raise ValueError(
             "Cannot precompute features if foundational model is not frozen."
@@ -89,30 +89,24 @@ def run_classification(
     vals, _ = np.unique(vals, return_counts=True)
     num_classes = len(vals)
     (
-        my_model,
+        feature_extractor,
         sampling_rate,
         input_len_sec,
-        feature_extractor_output_len,
-        feature_extractor,
+        output_len,
         feature_extractor_filename,
-    ) = get_full_classification_model(
-        feature_extractor_name=feature_extractor_name,
-        feature_extractor_local_path=feature_extractor_local_path,
+    ) = get_feature_extractor(
+        name=feature_extractor_name,
+        local_path=feature_extractor_local_path,
+        freeze=freeze_foundational_model,
         model_params=model_params,
-        classifier_cfg=classifier_cfg,
-        device=device,
-        num_classes=num_classes,
-        freeze_foundational_model=freeze_foundational_model,
-        assemble_feature_extractor=not precompute_features,
-        return_feature_ext_filename=True,
-        dropout=classifier_drouput,
+        return_filename=True,
         batch_norm_after_feature_extractor=batch_norm_after_feature_extractor,
     )
-
     classifier_name = classifier_cfg.name
-    dataset_name = dataset_cfg.name
+
     prev_window = math.ceil(classifier_cfg.prev_minutes * 60.0 / input_len_sec)
     post_window = math.ceil(classifier_cfg.post_minutes * 60.0 / input_len_sec)
+
     wandb_run = wandb.init(project='Classifier Training', config={
         'feature_extractor_name': feature_extractor_name,
         'classifier_name': classifier_name,
@@ -135,10 +129,29 @@ def run_classification(
         'viterbi': viterbi,
         'batch_norm_after_feature_extractor': batch_norm_after_feature_extractor,
         'Current Time and Date': time.strftime("%m/%d/%Y %H:%M:%S", time.localtime()),
-        'prev_window': prev_window,
-        'post_window': post_window,
     })
-
+    (
+        my_model,
+        sampling_rate,
+        input_len_sec,
+        feature_extractor_output_len,
+        feature_extractor,
+        feature_extractor_filename,
+    ) = get_full_classification_model(
+        feature_extractor_name=feature_extractor_name,
+        feature_extractor_local_path=feature_extractor_local_path,
+        backbone_model_params=model_params,
+        classifier_cfg=classifier_cfg,
+        device=device,
+        num_classes=num_classes,
+        freeze_foundational_model=freeze_foundational_model,
+        assemble_feature_extractor=not precompute_features,
+        return_feature_ext_filename=True,
+        dropout=classifier_drouput,
+        batch_norm_after_feature_extractor=batch_norm_after_feature_extractor,
+        prev_window=prev_window,
+        post_window=post_window,
+    )
     if human_act_freq_cutoff is None:
         human_act_freq_cutoff = math.floor(sampling_rate / 2)
 
@@ -214,7 +227,7 @@ def run_classification(
                 get_full_classification_model(
                 feature_extractor_name=feature_extractor_name,
                 feature_extractor_local_path=feature_extractor_local_path,
-                model_params=model_params,
+                backbone_model_params=model_params,
                 classifier_cfg=classifier_cfg,
                 device=device,
                 num_classes=num_classes,
@@ -223,6 +236,8 @@ def run_classification(
                 return_feature_ext_filename=True,
                 dropout=classifier_drouput,
                 batch_norm_after_feature_extractor=batch_norm_after_feature_extractor,
+                prev_window=prev_window,
+                post_window=post_window,
             ))
             # Split data into train_list and test_list
             train_list = dataset_list[:i] + dataset_list[i + 1 :]
@@ -334,7 +349,7 @@ def run_classification(
             ) = get_full_classification_model(
                 feature_extractor_name=feature_extractor_name,
                 feature_extractor_local_path=feature_extractor_local_path,
-                model_params=model_params,
+                backbone_model_params=model_params,
                 classifier_cfg=classifier_cfg,
                 device=device,
                 num_classes=num_classes,
@@ -343,6 +358,8 @@ def run_classification(
                 return_feature_ext_filename=True,
                 dropout=classifier_drouput,
                 batch_norm_after_feature_extractor=batch_norm_after_feature_extractor,
+                prev_window=prev_window,
+                post_window=post_window,
             )
 
             print(f"Cross validation fold {k+1}")

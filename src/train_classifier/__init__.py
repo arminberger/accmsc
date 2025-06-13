@@ -1,3 +1,3 @@
-from .classifier_models import get_full_classification_model
+from .classifier_models import get_full_classification_model, get_feature_extractor
 from .train_classifier import train_model
 from .run_classification import run_classification

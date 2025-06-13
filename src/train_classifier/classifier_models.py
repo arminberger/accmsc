@@ -12,12 +12,14 @@ def get_full_classification_model(
     num_classes,
     device,
     feature_extractor_local_path=None,
-    model_params=None,
+    backbone_model_params=None,
     freeze_foundational_model=False,
     assemble_feature_extractor=True,
     return_feature_ext_filename=False,
     dropout=0,
     batch_norm_after_feature_extractor=False,
+    prev_window=0,
+    post_window=0,
 ):
     """
 
@@ -32,8 +34,6 @@ def get_full_classification_model(
     Returns:
 
     """
-    prev_window = classifier_cfg.prev_windows
-    post_window = classifier_cfg.post_windows
     classifier_name = classifier_cfg.name
     clip_gradients = classifier_cfg.clip_gradients
     (
@@ -46,7 +46,7 @@ def get_full_classification_model(
         name=feature_extractor_name,
         local_path=feature_extractor_local_path,
         freeze=freeze_foundational_model,
-        model_params=model_params,
+        model_params=backbone_model_params,
         return_filename=return_feature_ext_filename,
         batch_norm_after_feature_extractor=batch_norm_after_feature_extractor,
     )
