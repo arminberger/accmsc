@@ -1,4 +1,4 @@
 name: asleep_lstm
-prev_windows: 540
-post_windows: 0
+prev_minutes: 90
+post_minutes: 0
 clip_gradients: false

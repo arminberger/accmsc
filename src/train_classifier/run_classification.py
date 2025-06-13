@@ -71,35 +71,8 @@ def run_classification(
 
     """
 
-    classifier_name = classifier_cfg.name
-    dataset_name = dataset_cfg.name
-    prev_window = classifier_cfg.prev_windows
-    post_window = classifier_cfg.post_windows
-    # Add all the parameters to the tensorboard writer
 
-    wandb_run = wandb.init(project='Classifier Training', config={
-        'feature_extractor_name': feature_extractor_name,
-        'classifier_name': classifier_name,
-        'dataset_name': dataset_name,
-        'model_params': model_params,
-        'classifier_cfg': classifier_cfg,
-        'train_test_split': train_test_split,
-        'weighted_sampling': weighted_sampling,
-        'human_act_freq_cutoff': human_act_freq_cutoff,
-        'freeze_foundational_model': freeze_foundational_model,
-        'precompute_features': precompute_features,
-        'num_epochs': num_epochs,
-        'seed': seed,
-        'normalize_data': normalize_data,
-        'classifier_drouput': classifier_drouput,
-        'cross_validation': cross_validation,
-        'looocv': looocv,
-        'weight_decay': weight_decay,
-        'do_select_model': do_select_model,
-        'viterbi': viterbi,
-        'batch_norm_after_feature_extractor': batch_norm_after_feature_extractor,
-        'Current Time and Date': time.strftime("%m/%d/%Y %H:%M:%S", time.localtime()),
-    })
+
 
     torch.manual_seed(seed)
 
@@ -135,6 +108,36 @@ def run_classification(
         dropout=classifier_drouput,
         batch_norm_after_feature_extractor=batch_norm_after_feature_extractor,
     )
+
+    classifier_name = classifier_cfg.name
+    dataset_name = dataset_cfg.name
+    prev_window = math.ceil(classifier_cfg.prev_minutes * 60.0 / input_len_sec)
+    post_window = math.ceil(classifier_cfg.post_minutes * 60.0 / input_len_sec)
+    wandb_run = wandb.init(project='Classifier Training', config={
+        'feature_extractor_name': feature_extractor_name,
+        'classifier_name': classifier_name,
+        'dataset_name': dataset_name,
+        'model_params': model_params,
+        'classifier_cfg': classifier_cfg,
+        'train_test_split': train_test_split,
+        'weighted_sampling': weighted_sampling,
+        'human_act_freq_cutoff': human_act_freq_cutoff,
+        'freeze_foundational_model': freeze_foundational_model,
+        'precompute_features': precompute_features,
+        'num_epochs': num_epochs,
+        'seed': seed,
+        'normalize_data': normalize_data,
+        'classifier_drouput': classifier_drouput,
+        'cross_validation': cross_validation,
+        'looocv': looocv,
+        'weight_decay': weight_decay,
+        'do_select_model': do_select_model,
+        'viterbi': viterbi,
+        'batch_norm_after_feature_extractor': batch_norm_after_feature_extractor,
+        'Current Time and Date': time.strftime("%m/%d/%Y %H:%M:%S", time.localtime()),
+        'prev_window': prev_window,
+        'post_window': post_window,
+    })
 
     if human_act_freq_cutoff is None:
         human_act_freq_cutoff = math.floor(sampling_rate / 2)
