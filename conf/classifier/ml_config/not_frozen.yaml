@@ -5,3 +5,4 @@ batch_size: 2048
 num_epochs: 50
 weight_decay: 0.0001
 freeze_backbone: false
+num_folds: 0

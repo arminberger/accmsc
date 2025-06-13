@@ -54,7 +54,7 @@ def main(cfg: DictConfig):
             seed=46012094831,
             normalize_data=True,
             classifier_drouput=0,
-            cross_validation=0,
+            cross_validation=cfg.classifier.ml_config.num_folds,
             looocv=False,
             weight_decay=1e-4,
             do_select_model=True,
