@@ -2,3 +2,4 @@ name: lstm_classifier
 prev_minutes: 90
 post_minutes: 0
 clip_gradients: false
+pad_input: false
