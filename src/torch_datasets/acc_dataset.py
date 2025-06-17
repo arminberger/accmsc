@@ -15,7 +15,7 @@ class AccDataset(Dataset):
         self,
         motion_df,
         label_df,
-        num_samples,
+        samples_per_window,
         motion_cols=["x", "y", "z"],
         label_col="label",
         label_transform=None,
@@ -26,7 +26,7 @@ class AccDataset(Dataset):
         Args:
             motion_df: motion dataframe, assumed to have an index containing timestamps and columns <motion_cols>
             label_df: label dataframe, assumed to have an index containing timestamps and a label column with name <label_col>
-            num_samples: How many contiguous motion data samples per dataset element
+            samples_per_window: How many contiguous motion data samples per dataset element
             motion_cols: motion_df columns to use as motion data
             label_col: label_df column to use as label
             transform:
@@ -37,14 +37,14 @@ class AccDataset(Dataset):
         assert is_datetime64_dtype(label_df.index)
         self.motion_df = motion_df
         self.label_df = label_df
-        self.num_samples = num_samples
+        self.num_samples = samples_per_window
         self.motion_cols = motion_cols
         self.motion_chan = len(motion_cols)
         self.label_col = label_col
         self.label_transform = label_transform
         self.channels_first = channels_first
 
-        self.length = math.floor(motion_df.shape[0] / num_samples)
+        self.length = math.floor(motion_df.shape[0] / samples_per_window)
     def __len__(self):
         return self.length
 

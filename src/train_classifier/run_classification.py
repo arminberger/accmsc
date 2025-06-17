@@ -176,7 +176,7 @@ def run_classification(
             AccDataset(
                 motion_df=dataset_list_name[k],
                 label_df=labels_list_name[k],
-                num_samples=sampling_rate * input_len_sec,
+                samples_per_window=sampling_rate * input_len_sec,
                 label_transform=train_label_transform_dict,
             )
             for k in range(len(dataset_list_name))
@@ -330,7 +330,7 @@ def run_classification(
 
     elif cross_validation > 0:
 
-        kf = KFold(n_splits=cross_validation, shuffle=True, random_state=seed)
+        kf = KFold(n_splits=cross_validation, shuffle=True, random_state=42)
         # Aggregate
         f1s = []
         kappas = []
