@@ -11,7 +11,7 @@ import pandas as pd
 from pandas.api.types import is_datetime64_dtype
 
 class ListDataset(Dataset):
-    def __init__(self, dataset_list, prev_elements=0, post_elements=0, pad_sequence=False):
+    def __init__(self, dataset_list, pad_sequence, prev_elements=0, post_elements=0):
         '''
 
         Args:

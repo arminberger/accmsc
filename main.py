@@ -51,7 +51,7 @@ def main(cfg: DictConfig):
             freeze_foundational_model=cfg.classifier.ml_config.freeze_backbone,
             precompute_features=True if cfg.classifier.ml_config.freeze_backbone else False,
             num_epochs=cfg.classifier.ml_config.num_epochs,
-            seed=46012094831,
+            seed=42,
             normalize_data=True,
             classifier_drouput=0,
             cross_validation=cfg.classifier.ml_config.num_folds,

@@ -29,7 +29,7 @@ def run_classification(
     freeze_foundational_model=True,
     precompute_features=True,
     num_epochs=100,
-    seed=46012094831,
+    seed=42,
     normalize_data=False,
     classifier_drouput=0,
     cross_validation=0,
@@ -103,7 +103,7 @@ def run_classification(
         batch_norm_after_feature_extractor=batch_norm_after_feature_extractor,
     )
     classifier_name = classifier_cfg.name
-
+    pad_input = classifier_cfg.pad_input
     prev_window = math.ceil(classifier_cfg.prev_minutes * 60.0 / input_len_sec)
     post_window = math.ceil(classifier_cfg.post_minutes * 60.0 / input_len_sec)
 
@@ -252,6 +252,7 @@ def run_classification(
                 dataset_list=train_list,
                 prev_elements=prev_window,
                 post_elements=post_window,
+                pad_sequence=pad_input,
             )
 
             val_dataloader = [
@@ -260,6 +261,7 @@ def run_classification(
                         dataset_list=[x],
                         prev_elements=prev_window,
                         post_elements=post_window,
+                        pad_sequence=pad_input,
                     ),
                     batch_size=512,
                     shuffle=False,
@@ -272,6 +274,7 @@ def run_classification(
                         dataset_list=[x],
                         prev_elements=prev_window,
                         post_elements=post_window,
+                        pad_sequence=pad_input,
                     ),
                     batch_size=512,
                     shuffle=False,
@@ -292,7 +295,7 @@ def run_classification(
             f1, kappa, balacc = train_model(
                 my_model=my_model,
                 train_dataloader=train_dataloader,
-                train_list=[ListDataset([x], prev_elements=prev_window, post_elements=post_window) for x in train_list],
+                train_list=[ListDataset([x], prev_elements=prev_window, post_elements=post_window, pad_sequence=pad_input) for x in train_list],
                 test_dataloaders=test_dataloader,
                 val_dataloaders=val_dataloader,
                 checkpoint_save_name=checkpoint_save_name,
@@ -330,7 +333,7 @@ def run_classification(
 
     elif cross_validation > 0:
 
-        kf = KFold(n_splits=cross_validation, shuffle=True, random_state=42)
+        kf = KFold(n_splits=cross_validation, shuffle=True, random_state=seed)
         # Aggregate
         f1s = []
         kappas = []
@@ -376,6 +379,7 @@ def run_classification(
                 dataset_list=train_list_k,
                 prev_elements=prev_window,
                 post_elements=post_window,
+                pad_sequence=pad_input,
             )
             sampler = None
             if weighted_sampling:
@@ -394,6 +398,7 @@ def run_classification(
                         dataset_list=[x],
                         prev_elements=prev_window,
                         post_elements=post_window,
+                        pad_sequence=pad_input,
                     ),
                     batch_size=512,
                     shuffle=False,
@@ -407,6 +412,7 @@ def run_classification(
                             dataset_list=[x],
                             prev_elements=prev_window,
                             post_elements=post_window,
+                            pad_sequence=pad_input,
                         ),
                         batch_size=512,
                         shuffle=False,
@@ -420,7 +426,7 @@ def run_classification(
             f1, kappa, balacc, report = train_model(
                 my_model=my_model,
                 train_dataloader=train_dataloader,
-                train_list=[ListDataset([x], prev_elements=prev_window, post_elements=post_window) for x
+                train_list=[ListDataset([x], prev_elements=prev_window, post_elements=post_window, pad_sequence=pad_input) for x
                             in train_list_k],
                 test_dataloaders=test_dataloader,
                 val_dataloaders=val_dataloader,
@@ -469,7 +475,7 @@ def run_classification(
         )
 
         test_dataloader = [DataLoader(ListDataset(
-            dataset_list=[x], prev_elements=prev_window, post_elements=post_window
+            dataset_list=[x], prev_elements=prev_window, post_elements=post_window, pad_sequence=pad_input
         ), batch_size=512, shuffle=False) for x in test_list]
         print("Train without cross validation")
         train_list, val_list = split_subject_wise(
@@ -477,7 +483,7 @@ def run_classification(
         )
         print(f"Train size (subjects): {len(train_list)}")
         train = ListDataset(
-            dataset_list=train_list, prev_elements=prev_window, post_elements=post_window
+            dataset_list=train_list, prev_elements=prev_window, post_elements=post_window, pad_sequence=pad_input
         )
         sampler = None
         if weighted_sampling:
@@ -491,12 +497,12 @@ def run_classification(
         )
 
         val_dataloader = [DataLoader(ListDataset(
-            dataset_list=[x], prev_elements=prev_window, post_elements=post_window
+            dataset_list=[x], prev_elements=prev_window, post_elements=post_window, pad_sequence=pad_input
         ), batch_size=512, shuffle=False) for x in val_list]
         train_model(
             my_model=my_model,
             train_dataloader=train_dataloader,
-            train_list=[ListDataset([x], prev_elements=prev_window, post_elements=post_window) for x in
+            train_list=[ListDataset([x], prev_elements=prev_window, post_elements=post_window, pad_sequence=pad_input) for x in
                         train_list],
             test_dataloaders=test_dataloader,
             val_dataloaders=val_dataloader,
