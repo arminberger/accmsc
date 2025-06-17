@@ -129,6 +129,7 @@ def run_classification(
         'viterbi': viterbi,
         'batch_norm_after_feature_extractor': batch_norm_after_feature_extractor,
         'Current Time and Date': time.strftime("%m/%d/%Y %H:%M:%S", time.localtime()),
+        'Pad LSTM input with zeros': pad_input,
     })
     (
         my_model,

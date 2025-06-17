@@ -50,6 +50,7 @@ def get_full_classification_model(
         return_filename=return_feature_ext_filename,
         batch_norm_after_feature_extractor=batch_norm_after_feature_extractor,
     )
+    print(f'Loaded feature extractor: {feature_extractor_name}, filename: {feature_extractor_filename}')
     if assemble_feature_extractor:
         my_model = get_classification_model(
             name=classifier_name,
@@ -75,7 +76,7 @@ def get_full_classification_model(
             clip_gradients=clip_gradients,
         )
 
-    print(my_model)
+    # print(my_model)
     if return_feature_ext_filename:
         return (
             my_model,
@@ -230,7 +231,7 @@ def get_feature_extractor(
         )
         del model.classifier.linear1
         del model.classifier.linear2
-        print(model)
+        #print(model)
         rm_keys = [
             "aot_h.linear1.weight",
             "aot_h.linear1.bias",
@@ -243,12 +244,13 @@ def get_feature_extractor(
         ]
         # Load CAP24 .mdl from local path
         sd = torch.load(local_path, map_location=torch.device("cpu"))
-        print(sd.keys())
+        #print(sd.keys())
         for key in rm_keys:
             del sd[key]
         model.load_state_dict(sd)
-        print(model)
+        #print(model)
         model = list(model.children())[0]
+        filename_model = local_path
     elif "harnet10_ukb" == name:
         local_path = os.path.join(local_path, 'harnet10_ukb.mdl')
         sampling_rate, input_len_sec, output_len = 30, 10, 1024
@@ -258,7 +260,7 @@ def get_feature_extractor(
         )
         del model.classifier.linear1
         del model.classifier.linear2
-        print(model)
+        #print(model)
         rm_keys = [
             "aot_h.linear1.weight",
             "aot_h.linear1.bias",
@@ -275,15 +277,16 @@ def get_feature_extractor(
         for key in sd_keys:
             # Only remove keys that start with 'module.'
             prefix = "module."
-            print(key)
+            #print(key)
             if key.startswith(prefix):
                 sd[key[len(prefix) :]] = sd[key]
                 del sd[key]
         for key in rm_keys:
             del sd[key]
         model.load_state_dict(sd)
-        print(model)
+        #print(model)
         model = list(model.children())[0]
+        filename_model = local_path
     elif "harnet10_untrained" == name:
         # Load harnet trained by me on custom data and augs
         augs = model_params["augs"]
