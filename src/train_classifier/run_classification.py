@@ -107,7 +107,7 @@ def run_classification(
     prev_window = math.ceil(classifier_cfg.prev_minutes * 60.0 / input_len_sec)
     post_window = math.ceil(classifier_cfg.post_minutes * 60.0 / input_len_sec)
 
-    wandb_run = wandb.init(project='Classifier Training 3', config={
+    wandb_run = wandb.init(project=f'Classifier Training {dataset_name}', config={
         'feature_extractor_name': feature_extractor_name,
         'classifier_name': classifier_name,
         'dataset_name': dataset_name,
