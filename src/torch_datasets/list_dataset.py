@@ -28,7 +28,12 @@ class ListDataset(Dataset):
         self.first_index_list = []
         acc = 0
         for i in range(len(dataset_list)):
-            acc = acc + len(dataset_list[i]) - self.prev_elements - self.post_elements if not pad_sequence else acc + len(dataset_list[i])
+            if pad_sequence:
+                acc = acc + len(dataset_list[i])
+            elif len(dataset_list[i]) - self.prev_elements - self.post_elements < 0:
+                acc = acc
+            else:
+                acc = acc + len(dataset_list[i]) - self.prev_elements - self.post_elements
             self.first_index_list.append(acc)
         self.length = acc
         self.data_is_tensor = torch.is_tensor(dataset_list[0][0][0])
