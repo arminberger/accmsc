@@ -38,6 +38,7 @@ def run_classification(
     do_select_model=True,
     viterbi=False,
     batch_norm_after_feature_extractor=False,
+    burn_in_epochs=0,
 ):
     """
 
@@ -107,7 +108,7 @@ def run_classification(
     prev_window = math.ceil(classifier_cfg.prev_minutes * 60.0 / input_len_sec)
     post_window = math.ceil(classifier_cfg.post_minutes * 60.0 / input_len_sec)
 
-    wandb_run = wandb.init(project=f'Classifier Training {dataset_name}', config={
+    wandb_run = wandb.init(project=f'Classifier Training Burn-In', config={
         'feature_extractor_name': feature_extractor_name,
         'classifier_name': classifier_name,
         'dataset_name': dataset_name,
@@ -130,6 +131,7 @@ def run_classification(
         'batch_norm_after_feature_extractor': batch_norm_after_feature_extractor,
         'Current Time and Date': time.strftime("%m/%d/%Y %H:%M:%S", time.localtime()),
         'Pad LSTM input with zeros': pad_input,
+        'Burn in epochs': burn_in_epochs,
     })
     (
         my_model,
@@ -309,6 +311,7 @@ def run_classification(
                 do_selection=do_select_model,
                 labels_transform_dict=test_label_transform_dict,
                 viterbi=viterbi,
+                burn_in_epochs=burn_in_epochs,
             )
             f1s.append(f1)
             kappas.append(kappa)
@@ -442,6 +445,7 @@ def run_classification(
                 labels_transform_dict=test_label_transform_dict,
                 viterbi=viterbi,
                 return_report=True,
+                burn_in_epochs=burn_in_epochs,
             )
             f1s.append(f1)
             kappas.append(kappa)
@@ -515,6 +519,7 @@ def run_classification(
             num_fold=0,
             weight_decay=weight_decay,
             labels_transform_dict=test_label_transform_dict,
+            burn_in_epochs=burn_in_epochs,
         )
 
     wandb_run.finish(0)

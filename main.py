@@ -60,6 +60,7 @@ def main(cfg: DictConfig):
             do_select_model=True,
             viterbi=False,
             batch_norm_after_feature_extractor=False,
+            burn_in_epochs=cfg.classifier.ml_config.burn_in_epochs,
         )
     elif cfg.task == "train_ssl":
         print("Training SSL")

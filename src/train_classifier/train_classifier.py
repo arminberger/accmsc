@@ -31,6 +31,7 @@ def train_model(
     do_selection=True,
     viterbi=False,
     return_report=False,
+    burn_in_epochs=5,
 ):
     my_model.to(device)
     sample = train_dataloader.dataset[0][0].unsqueeze(0).to(device)
@@ -57,7 +58,7 @@ def train_model(
     best_balanced_f1 = -1000
     best_balanced_f1_epoch = 20
     best_kappa = -1000
-    best_kappa_epoch = 0
+    best_kappa_epoch = burn_in_epochs
     hmm = None
     get_obs = None
     while t < num_epochs:
