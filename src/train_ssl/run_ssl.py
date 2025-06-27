@@ -20,7 +20,7 @@ def run_simclr_cap24_weighted_subject_wise(dataset_cfg, augs, paths_cfg, low_pas
                                            num_epochs=100, batch_size=256, num_subjects=1,
                                            night_only=False, grad_checkpointing=False, linear_scaling=False,
                                            use_adam=True, weight_decay=0.0001, autocast=False, normalize_data=False,
-                                           provided_data=None, train_val_split_ratio=0.2):
+                                           provided_data=None, train_val_split_ratio=0.2, subject_percent=1):
     """
 
     Args:
@@ -56,7 +56,7 @@ def run_simclr_cap24_weighted_subject_wise(dataset_cfg, augs, paths_cfg, low_pas
 
 
     # Initialize wandb
-    run = wandb.init(project='SSL Training', config={
+    run = wandb.init(project='SSL Scaling Laws', config={
         'augs': augs,
         'low_pass_freq': low_pass_freq,
         'sampling_rate': sampling_rate,
@@ -76,9 +76,9 @@ def run_simclr_cap24_weighted_subject_wise(dataset_cfg, augs, paths_cfg, low_pas
         'normalize_data': normalize_data,
         'hashed_name': hashed_name,
         'Current Time and Date': time.strftime("%m/%d/%Y %H:%M:%S", time.localtime()),
+        'subject_percent': subject_percent,
     })
-    # Trim hash to 10 characters for the model name later on
-    hashed_name = str(hashed_name)[:10]
+    hashed_name = str(hashed_name)
     DEVICE = get_available_device()
     print(f"Using device: {DEVICE}")
     # Check if sampling rate is at least twice the low pass frequency
@@ -116,6 +116,13 @@ def run_simclr_cap24_weighted_subject_wise(dataset_cfg, augs, paths_cfg, low_pas
             normalize_data=normalize_data,
             win_len_s=window_len,
         )
+        if subject_percent < 1:
+            # Subsample the subjects
+            use_subjects = int(len(motion_data_list) * subject_percent + 1)
+            run.log({'# of subjects used for training: ': use_subjects})
+            run.log({'# of subjects in the dataset: ': len(motion_data_list)})
+            motion_data_list = motion_data_list[:use_subjects]
+            subject_ids = subject_ids[:use_subjects]
         dataset_per_subject_list = []
         for subject in motion_data_list:
             dataset_per_subject_list.append(
@@ -128,7 +135,10 @@ def run_simclr_cap24_weighted_subject_wise(dataset_cfg, augs, paths_cfg, low_pas
         train, val = split_subject_wise(
             dataset_per_subject_list, train_val_split_ratio, random_gen=random.Random(42)
         )
-
+        if len(train) < num_subjects:
+            raise ValueError(
+                f"Not enough subjects in the training set ({len(train)}) to sample {num_subjects} subjects per batch. "
+            )
         # Compute weighted sampler weights – weights are not connected to aug
         train_weights = compute_weights(train)
         # Dataset dict should have a list of subjects for every augmentation

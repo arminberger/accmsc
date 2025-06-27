@@ -73,13 +73,14 @@ def main(cfg: DictConfig):
                                                window_len=cfg.feature_extractor.network.input_len_seconds,
                                                num_epochs=cfg.feature_extractor.ml_config.num_epochs,
                                                batch_size=cfg.feature_extractor.ml_config.batch_size,
-                                               num_subjects=4,
+                                               num_subjects=cfg.feature_extractor.ml_config.num_subjects_per_batch,
                                                grad_checkpointing=False,
                                                use_adam=True,
                                                weight_decay=cfg.feature_extractor.ml_config.weight_decay,
                                                autocast=True,
                                                normalize_data=cfg.feature_extractor.ml_config.normalize_data,
-                                               train_val_split_ratio=cfg.feature_extractor.ml_config.train_test_split
+                                               train_val_split_ratio=cfg.feature_extractor.ml_config.train_test_split,
+                                               subject_percent=cfg.feature_extractor.ml_config.subject_share
                                                )
     else:
         raise ValueError(f"Unknown task: {cfg.task}")
