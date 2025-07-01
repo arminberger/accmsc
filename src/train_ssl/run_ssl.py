@@ -74,7 +74,7 @@ def run_simclr_cap24_weighted_subject_wise(dataset_cfg, augs, paths_cfg, low_pas
         'weight_decay': weight_decay,
         'autocast': autocast,
         'normalize_data': normalize_data,
-        'hashed_name': hashed_name,
+        'hashed_name': str(hashed_name),
         'Current Time and Date': time.strftime("%m/%d/%Y %H:%M:%S", time.localtime()),
         'subject_percent': subject_percent,
     })
