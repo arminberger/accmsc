@@ -132,6 +132,7 @@ def run_classification(
         'Current Time and Date': time.strftime("%m/%d/%Y %H:%M:%S", time.localtime()),
         'Pad LSTM input with zeros': pad_input,
         'Burn in epochs': burn_in_epochs,
+        'Feature extractor filename': feature_extractor_filename,
     })
     (
         my_model,
