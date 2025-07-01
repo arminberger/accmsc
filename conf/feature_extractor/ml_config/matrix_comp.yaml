@@ -1,0 +1,8 @@
+# ML config
+normalize_data: true
+train_test_split: 0.2
+batch_size: 2048
+num_epochs: 30
+weight_decay: 0.0001
+num_subjects_per_batch: 4
+subject_share: 1

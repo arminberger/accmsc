@@ -288,32 +288,46 @@ def get_feature_extractor(
         model = list(model.children())[0]
         filename_model = local_path
     elif "harnet10_untrained" == name:
-        # Load harnet trained by me on custom data and augs
-        augs = model_params["augs"]
-        # local path is only base path in this case
+        hash = model_params["hash"] if model_params is not None else None
         model_path = None
-        for path in os.scandir(local_path):
-            print(path.name)
-            if path.name.endswith(".pt") and path.name.startswith('best_model'):
-                # Remove best_model_ prefix
-                filename = path.name.replace('best_model_', '')
-                # Extract the characters of filename from the start to the first $ sign
-                filename = filename.split('$')[0]
-                # Check that filename is resnet_harnet
-                if filename.startswith('harnet10_untrained'):
-                    if augs is not None:
-                        print(set(augs))
-                        print(set(extract_augs(path.name)))
-                        if set(augs) == set(extract_augs(path.name)):
+        if hash is not None:
+            for path in os.scandir(local_path):
+                print(path.name)
+                if path.name.endswith(".pt") and path.name.startswith('best_model'):
+                    if path.name.replace("best_model_", "").startswith("backbone_harnet10_untrained"):
+                        # Check if the file hash matches the given hash
+                        # Example filename: best_model_backbone_harnet10_untrained_$rotation$_$lfc$_$t_warp_harnet$_hash_1913431322398589365.pt
+                        current_file_hash = int(path.name.split('_hash_')[-1].split('.')[0])
+                        if current_file_hash == hash:
                             model_path = path.path
                             filename_model = path.name
                             break
-                    else:
-                        # Just take the first model found
-                        model_path = path.path
-                        filename_model = path.name
+        else:
+            # Load harnet trained by me on custom data and augs
+            augs = model_params["augs"]
+            # local path is only base path in this case
+            for path in os.scandir(local_path):
+                print(path.name)
+                if path.name.endswith(".pt") and path.name.startswith('best_model'):
+                    # Remove best_model_ prefix
+                    filename = path.name.replace('best_model_', '')
+                    # Extract the characters of filename from the start to the first $ sign
+                    filename = filename.split('$')[0]
+                    # Check that filename is resnet_harnet
+                    if filename.startswith('backbone_harnet10_untrained'):
+                        if augs is not None:
+                            print(set(augs))
+                            print(set(extract_augs(path.name)))
+                            if set(augs) == set(extract_augs(path.name)):
+                                model_path = path.path
+                                filename_model = path.name
+                                break
+                        else:
+                            # Just take the first model found
+                            model_path = path.path
+                            filename_model = path.name
         if model_path is None:
-            raise ValueError("No model found with the specified augmentations")
+            raise ValueError("No model found with the specified augmentations or hash")
         sampling_rate, input_len_sec, output_len = 30, 10, 1024
         # Get the backbone network
         backbone_output_dim = 1024
