@@ -529,14 +529,13 @@ def run_classification(
 def get_weighted_sampler(train):
     train_indices_ws = list(range(len(train)))
     train_labels_ws = [train[i][1] for i in train_indices_ws]
-    class_labels_count = np.array(
-        [
-            len(np.asarray(train_labels_ws == t).nonzero()[0])
-            for t in np.unique(train_labels_ws)
-        ]
-    )
-    class_weights = 1.0 / class_labels_count
-    samples_weight = np.array([class_weights[t] for t in train_labels_ws])
+    class_counts_dict = {
+            t: len(np.asarray(train_labels_ws == t).nonzero()[0])
+            for t in np.unique(train_labels_ws)}
+    class_weights_dict = {}
+    for cls, count in class_counts_dict.items():
+        class_weights_dict[cls] = count / len(train)
+    samples_weight = np.array([class_weights_dict[int(label)] for label in train_labels_ws])
     samples_weight = torch.from_numpy(samples_weight)
     sampler = torch.utils.data.sampler.WeightedRandomSampler(
         samples_weight.type("torch.DoubleTensor"),
