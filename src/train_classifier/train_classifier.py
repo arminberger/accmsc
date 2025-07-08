@@ -2,6 +2,7 @@ import numpy as np
 import torch
 import os
 from sklearn.metrics import classification_report
+from sklearn.metrics import roc_auc_score, precision_recall_curve, auc
 from torch.utils.data import DataLoader
 from src.utils import classification_train_loop as train_loop, classification_test_loop as test_loop
 from torchmetrics.functional.classification import multiclass_cohen_kappa
@@ -195,18 +196,13 @@ def train_model(
         num_classes,
         test_dataloaders,
         best_kappa_epoch,
+        wandb_run,
+        num_fold,
         labels_transform=labels_transform_dict,
         viterbi=hmm,
         convert_sequence=get_obs,
         dataloader_per_subject=True,
     )
-
-    wandb_run.log({f"Best Kappa Model Report (Fold {num_fold})": report})
-    wandb_run.log({
-        f"Best Kappa (Fold {num_fold})": kappa,
-        f"Best F1 (Fold {num_fold})": f1,
-        f"Balanced Accuracy (Fold {num_fold})": balacc,
-    })
     print(report)
 
     print("Done!")
@@ -221,6 +217,8 @@ def compute_report(
     num_classes,
     test_dataloader,
     epoch,
+    wandb_run,
+    num_fold=0,
     labels_transform=None,
     viterbi=None,
     convert_sequence=None,
@@ -242,6 +240,20 @@ def compute_report(
         transform_lambda = lambda x: labels_transform[x]
         targets = targets.apply_(transform_lambda)
         preds = preds.apply_(transform_lambda)
+        # Transform the logits as well by summing over the transformed classes
+        # First get a dict
+        logits_dict = {}
+        for i in range(num_classes_transformed):
+            for key, value in labels_transform.items():
+                if value in logits_dict:
+                    logits_dict[value] += [int(key)]
+                else:
+                    logits_dict[value] = [int(key)]
+        preds_logits_reduced = torch.zeros((preds_logits.shape[0], num_classes_transformed))
+        for i in range(num_classes_transformed):
+            for j in logits_dict[i]:
+                preds_logits_reduced[:, i] += preds_logits[:, j]
+        preds_logits = preds_logits_reduced
 
     val_loss = loss_fn(preds_logits, targets)
     val_balanced_f1 = multiclass_f1_score(
@@ -280,6 +292,38 @@ def compute_report(
     )
     report = classification_report(targets, preds, digits=4)
 
+    # Calculate ROC AUC and PR AUC metrics
+    effective_num_classes = num_classes if labels_transform is None else num_classes_transformed
+
+    # Convert targets to one-hot encoding for micro-averaging
+    targets_one_hot = torch.nn.functional.one_hot(targets, num_classes=effective_num_classes).numpy()
+
+    # Get the probabilities using softmax
+    preds_proba = torch.nn.functional.softmax(preds_logits, dim=1).numpy()
+
+    # Calculate AUC-ROC with macro and micro averaging
+    try:
+        roc_auc_macro = roc_auc_score(targets_one_hot, preds_proba, average='macro', multi_class='ovr')
+        roc_auc_micro = roc_auc_score(targets_one_hot, preds_proba, average='micro', multi_class='ovr')
+    except ValueError as e:
+        # Handle case when a class might not be present in the test set
+        print(f"Warning: Could not compute ROC AUC: {e}")
+        roc_auc_macro = float('nan')
+        roc_auc_micro = float('nan')
+
+    # Calculate AUC-PR (precision-recall) with macro and micro averaging
+    pr_auc_macro = 0
+    for i in range(effective_num_classes):
+        precision, recall, _ = precision_recall_curve(targets_one_hot[:, i], preds_proba[:, i])
+        if np.sum(targets_one_hot[:, i]) > 0:  # Only if this class exists in targets
+            pr_auc_macro += auc(recall, precision) / effective_num_classes
+
+    # Micro-averaged PR AUC
+    y_true_flat = targets_one_hot.ravel()
+    y_score_flat = preds_proba.ravel()
+    precision, recall, _ = precision_recall_curve(y_true_flat, y_score_flat)
+    pr_auc_micro = auc(recall, precision)
+
     final_str = (
         f"Report \n"
         f"Model from epoch {epoch} \n"
@@ -288,9 +332,23 @@ def compute_report(
         f"Kappa: {val_kappa} \n"
         f"Balanced Accuracy: {balanced_acc} \n"
         f"Accuracy: {acc} \n"
+        f"ROC AUC (macro): {roc_auc_macro:.4f} \n"
+        f"ROC AUC (micro): {roc_auc_micro:.4f} \n"
+        f"PR AUC (macro): {pr_auc_macro:.4f} \n"
+        f"PR AUC (micro): {pr_auc_micro:.4f} \n"
         f"Confusion Matrix: {confusion_matrix} \n"
         f"Classification Report:\n {report}"
     )
+    wandb_run.log({f"Best Kappa Model Report (Fold {num_fold})": final_str})
+    wandb_run.log({
+        f"Best Kappa (Fold {num_fold})": val_kappa,
+        f"Best F1 (Fold {num_fold})": val_balanced_f1,
+        f"Balanced Accuracy (Fold {num_fold})": balanced_acc,
+        f"ROC AUC (Fold {num_fold})": roc_auc_macro,
+        f"ROC AUC Micro (Fold {num_fold})": roc_auc_micro,
+        f"PR AUC (Fold {num_fold})": pr_auc_macro,
+        f"PR AUC Micro (Fold {num_fold})": pr_auc_micro,
+    })
 
     return final_str, val_balanced_f1, val_kappa, balanced_acc
 
