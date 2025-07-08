@@ -289,6 +289,7 @@ def get_feature_extractor(
         filename_model = local_path
     elif "harnet10_untrained" == name:
         hash = model_params["hash"] if model_params is not None else None
+        print(hash)
         model_path = None
         if hash is not None:
             for path in os.scandir(local_path):
@@ -298,6 +299,7 @@ def get_feature_extractor(
                         # Check if the file hash matches the given hash
                         # Example filename: best_model_backbone_harnet10_untrained_$rotation$_$lfc$_$t_warp_harnet$_hash_1913431322398589365.pt
                         current_file_hash = int(path.name.split('_hash_')[-1].split('.')[0])
+                        print(current_file_hash)
                         if current_file_hash == hash:
                             model_path = path.path
                             filename_model = path.name
