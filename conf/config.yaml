@@ -15,7 +15,7 @@ defaults:
   - classifier/ml_config: default
   - feature_extractor/augmentations@classifier.backbone_augs: best_bsc
   - feature_extractor/network@classifier.backbone_network: harnet10_untrained
-  - classifier/feature_extractor: example_hash
+  - classifier/feature_extractor: no_hash
 
   # We mount all datasets under the download path to be able to download all of them even if they are not needed for training
   - classifier/dataset@download.applewatch: applewatch
