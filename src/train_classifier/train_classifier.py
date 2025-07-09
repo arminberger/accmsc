@@ -61,9 +61,15 @@ def train_model(
     best_balanced_f1_epoch = 20
     best_kappa = -1000
     best_kappa_epoch = burn_in_epochs
+    patience = 10
+    epochs_since_best_loss = -burn_in_epochs
     hmm = None
     get_obs = None
     while t < num_epochs:
+        if epochs_since_best_loss >= patience:
+            print("Early stopping...")
+            break
+        epochs_since_best_loss = epochs_since_best_loss + 1
         print(f"Epoch {t + 1}\n-------------------------------")
         train_loss = train_loop(train_dataloader, my_model, device, loss_fn, optimizer)
 
@@ -95,6 +101,7 @@ def train_model(
                 best_loss = val_loss
                 best_loss_epoch = t
                 best_loss_model = copy.deepcopy(my_model.state_dict())
+                epochs_since_best_loss = 0
             """
             if val_balanced_f1 > best_balanced_f1 and t > best_balanced_f1_epoch:
                 best_balanced_f1 = val_balanced_f1
@@ -105,10 +112,6 @@ def train_model(
                 best_kappa_epoch = t
                 best_kappa_model = copy.deepcopy(my_model.state_dict())
 
-            """writer.add_scalar(f"Validation Loss (Fold {num_fold})", val_loss, t)
-            writer.add_scalar(
-                f"Validation Balanced F1 (Fold {num_fold})", val_balanced_f1, t
-            )"""
             # writer.add_scalar(f"Validation Kappa (Fold {num_fold})", val_kappa, t)
             wandb_run.log({f"Validation Loss (Fold {num_fold})", val_loss}, step=t)
             wandb_run.log({f"Validation Kappa (Fold {num_fold})": val_kappa}, step=t)
@@ -152,6 +155,7 @@ def train_model(
         writer.add_scalar(f"Test Balanced F1 (Fold {num_fold})", f1_score, t)"""
 
         t = t + 1
+
 
     if not do_selection:
         best_kappa_model = copy.deepcopy(my_model.state_dict())
