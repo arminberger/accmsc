@@ -49,13 +49,14 @@ def train_model(
     if timestamp_model_path is not None:
         print("Loading model...")
         my_model.load_state_dict(torch.load(timestamp_model_path))
-    """best_loss_model = copy.deepcopy(my_model.state_dict())
+    best_loss_model = copy.deepcopy(my_model.state_dict())
+    """
     best_f1_model = copy.deepcopy(my_model.state_dict())"""
     best_kappa_model = copy.deepcopy(my_model.state_dict())
 
     t = 0
     best_loss = int(1e9)
-    best_loss_epoch = 20
+    best_loss_epoch = burn_in_epochs
     best_balanced_f1 = -1000
     best_balanced_f1_epoch = 20
     best_kappa = -1000
@@ -82,17 +83,19 @@ def train_model(
                 dataloader_per_subject=True,
             )
 
-            """val_loss = loss_fn(preds_logits, targets)
+            val_loss = loss_fn(preds_logits, targets)
+            """
             val_balanced_f1 = multiclass_f1_score(
                 preds, targets, num_classes=num_classes
             )"""
             val_kappa = multiclass_cohen_kappa(preds, targets, num_classes=num_classes)
             print(f"Validation Kappa: {val_kappa}")
 
-            """if val_loss < best_loss and t > best_loss_epoch:
+            if val_loss < best_loss and t > best_loss_epoch:
                 best_loss = val_loss
                 best_loss_epoch = t
                 best_loss_model = copy.deepcopy(my_model.state_dict())
+            """
             if val_balanced_f1 > best_balanced_f1 and t > best_balanced_f1_epoch:
                 best_balanced_f1 = val_balanced_f1
                 best_balanced_f1_epoch = t
@@ -107,7 +110,7 @@ def train_model(
                 f"Validation Balanced F1 (Fold {num_fold})", val_balanced_f1, t
             )"""
             # writer.add_scalar(f"Validation Kappa (Fold {num_fold})", val_kappa, t)
-
+            wandb_run.log({f"Validation Loss (Fold {num_fold})", val_loss}, step=t)
             wandb_run.log({f"Validation Kappa (Fold {num_fold})": val_kappa}, step=t)
 
         if t % 10 == 0:
@@ -183,7 +186,7 @@ def train_model(
         writer.add_text("Best F1 Model Report", report, best_balanced_f1_epoch)"""
 
     # Best kappa model
-    my_model.load_state_dict(best_kappa_model)
+    my_model.load_state_dict(best_loss_model)
     hmm, get_obs, invert = (
         getHMM(train_list, val_dataloaders, my_model, device, num_classes, n_buckets=3, obs='top_k_probs', top_k=2, top_k_probs=1)
         if viterbi
