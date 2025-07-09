@@ -100,6 +100,7 @@ def train_simclr_precomputed_augs_per_subject(
     seed = 42
     model.to(DEVICE)
     ntxent_criterion.to(DEVICE)
+    epochs_since_best_val_loss = 0
 
 
     # Main training loop
@@ -188,9 +189,15 @@ def train_simclr_precomputed_augs_per_subject(
             })
 
         if curr_val_loss <= min_val_loss:
+            epochs_since_best_val_loss = 0
             min_val_loss = curr_val_loss
             best_model = copy.deepcopy(model.state_dict())
             print(f"Saving best model at epoch {epoch}")
+        if epochs_since_best_val_loss > 10:
+            print(
+                f"Validation loss has not improved for {epochs_since_best_val_loss} epochs, stopping training."
+            )
+            return best_model
     return best_model
 
 
