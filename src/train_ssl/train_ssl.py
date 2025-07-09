@@ -198,6 +198,7 @@ def train_simclr_precomputed_augs_per_subject(
                 f"Validation loss has not improved for {epochs_since_best_val_loss} epochs, stopping training."
             )
             return best_model
+        epochs_since_best_val_loss += 1
     return best_model
 
 
