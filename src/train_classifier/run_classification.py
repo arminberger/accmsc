@@ -534,7 +534,7 @@ def get_weighted_sampler(train):
             for t in np.unique(train_labels_ws)}
     class_weights_dict = {}
     for cls, count in class_counts_dict.items():
-        class_weights_dict[cls] = count / len(train)
+        class_weights_dict[cls] = 1 / count
     samples_weight = np.array([class_weights_dict[int(label)] for label in train_labels_ws])
     samples_weight = torch.from_numpy(samples_weight)
     sampler = torch.utils.data.sampler.WeightedRandomSampler(
@@ -542,5 +542,5 @@ def get_weighted_sampler(train):
         len(samples_weight),
         generator=torch.Generator(),
     )
-    print(sampler.generator.initial_seed())
+    print(f'Weighted sampler seed: {sampler.generator.initial_seed()}')
     return sampler
