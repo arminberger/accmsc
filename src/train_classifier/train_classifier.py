@@ -113,7 +113,7 @@ def train_model(
                 best_kappa_model = copy.deepcopy(my_model.state_dict())
 
             # writer.add_scalar(f"Validation Kappa (Fold {num_fold})", val_kappa, t)
-            wandb_run.log({f"Validation Loss (Fold {num_fold})", val_loss}, step=t)
+            wandb_run.log({f"Validation Loss (Fold {num_fold})": val_loss}, step=t)
             wandb_run.log({f"Validation Kappa (Fold {num_fold})": val_kappa}, step=t)
 
         if t % 10 == 0:
