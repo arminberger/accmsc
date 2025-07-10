@@ -334,7 +334,7 @@ def run_classification(
             "LOOOCV kappa std": kappa_std,
             "LOOOCV balacc mean": balacc_mean,
             "LOOOCV balacc std": balacc_std,
-        })
+        }, step=0)
 
     elif cross_validation > 0:
 
@@ -472,7 +472,7 @@ def run_classification(
             "Cross validation kappa std": kappa_std,
             "Cross validation balacc mean": balacc_mean,
             "Cross validation balacc std": balacc_std,
-        })
+        }, step=0)
 
     else:
         # Split data into train_list and test_list

@@ -345,7 +345,7 @@ def compute_report(
         f"Confusion Matrix: {confusion_matrix} \n"
         f"Classification Report:\n {report}"
     )
-    wandb_run.log({f"Best Kappa Model Report (Fold {num_fold})": final_str})
+    wandb_run.log({f"Best Kappa Model Report (Fold {num_fold})": final_str}, step=0)
     wandb_run.log({
         f"Best Kappa (Fold {num_fold})": val_kappa,
         f"Best F1 (Fold {num_fold})": val_balanced_f1,
@@ -354,7 +354,7 @@ def compute_report(
         f"ROC AUC Micro (Fold {num_fold})": roc_auc_micro,
         f"PR AUC (Fold {num_fold})": pr_auc_macro,
         f"PR AUC Micro (Fold {num_fold})": pr_auc_micro,
-    })
+    }, step=0)
 
     return final_str, val_balanced_f1, val_kappa, balanced_acc
 
