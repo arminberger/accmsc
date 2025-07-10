@@ -202,7 +202,7 @@ def train_model(
         my_model,
         num_classes,
         test_dataloaders,
-        best_kappa_epoch,
+        best_loss_epoch,
         wandb_run,
         num_fold,
         labels_transform=labels_transform_dict,
