@@ -54,7 +54,7 @@ def train_model(
     best_f1_model = copy.deepcopy(my_model.state_dict())"""
     best_kappa_model = copy.deepcopy(my_model.state_dict())
 
-    t = 0
+    current_epoch = 0
     best_loss = int(1e9)
     best_loss_epoch = burn_in_epochs
     best_balanced_f1 = -1000
@@ -65,15 +65,16 @@ def train_model(
     epochs_since_best_loss = -burn_in_epochs
     hmm = None
     get_obs = None
-    while t < num_epochs:
+    while current_epoch < num_epochs:
+        print(f"Current epoch: {current_epoch+1}, Best loss epoch: {best_loss_epoch}, Best kappa epoch: {best_kappa_epoch}, Epochs since best loss: {epochs_since_best_loss}")
         if epochs_since_best_loss >= patience:
-            print("Early stopping...")
+            print(f'Early stopping at epoch {current_epoch+1} due to no improvement in validation loss for {patience} epochs.')
             break
         epochs_since_best_loss = epochs_since_best_loss + 1
-        print(f"Epoch {t + 1}\n-------------------------------")
+
         train_loss = train_loop(train_dataloader, my_model, device, loss_fn, optimizer)
 
-        wandb_run.log({f"Training Loss (Fold {num_fold})": train_loss}, step=t)
+        wandb_run.log({f"Training Loss (Fold {num_fold})": train_loss}, step=current_epoch+1)
 
         """loss, acc, balanced_acc = test_loop(
             val_dataloader, my_model, device, loss_fn, num_classes
@@ -90,6 +91,7 @@ def train_model(
             )
 
             val_loss = loss_fn(preds_logits, targets)
+            print(f"Validation loss in epoch {current_epoch+1}: {val_loss}")
             """
             val_balanced_f1 = multiclass_f1_score(
                 preds, targets, num_classes=num_classes
@@ -97,9 +99,9 @@ def train_model(
             val_kappa = multiclass_cohen_kappa(preds, targets, num_classes=num_classes)
             print(f"Validation Kappa: {val_kappa}")
 
-            if val_loss < best_loss and t > best_loss_epoch:
+            if val_loss < best_loss and current_epoch > best_loss_epoch:
                 best_loss = val_loss
-                best_loss_epoch = t
+                best_loss_epoch = current_epoch
                 best_loss_model = copy.deepcopy(my_model.state_dict())
                 epochs_since_best_loss = 0
             """
@@ -107,19 +109,16 @@ def train_model(
                 best_balanced_f1 = val_balanced_f1
                 best_balanced_f1_epoch = t
                 best_f1_model = copy.deepcopy(my_model.state_dict())"""
-            if val_kappa > best_kappa and t > best_kappa_epoch:
+            if val_kappa > best_kappa and current_epoch > best_kappa_epoch:
                 best_kappa = val_kappa
-                best_kappa_epoch = t
+                best_kappa_epoch = current_epoch
                 best_kappa_model = copy.deepcopy(my_model.state_dict())
 
             # writer.add_scalar(f"Validation Kappa (Fold {num_fold})", val_kappa, t)
-            wandb_run.log({f"Validation Loss (Fold {num_fold})": val_loss}, step=t)
-            wandb_run.log({f"Validation Kappa (Fold {num_fold})": val_kappa}, step=t)
+            wandb_run.log({f"Validation Loss (Fold {num_fold})": val_loss}, step=current_epoch+1)
+            wandb_run.log({f"Validation Kappa (Fold {num_fold})": val_kappa}, step=current_epoch+1)
 
-        if t % 10 == 0:
-            filename = f"{checkpoint_save_name}_epoch_{str(t)}.pth"
-            save_path = os.path.join(checkpoint_save_path, filename)
-            print(f"Saving model to: {save_path}")
+
 
         # Test per class accuracy of my_model on test set
         """hmm, get_obs, invert = (
@@ -154,7 +153,7 @@ def train_model(
         writer.add_scalar(f"Test Kappa (Fold {num_fold})", kappa, t)
         writer.add_scalar(f"Test Balanced F1 (Fold {num_fold})", f1_score, t)"""
 
-        t = t + 1
+        current_epoch = current_epoch + 1
 
 
     if not do_selection:
