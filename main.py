@@ -1,10 +1,11 @@
+import os
+os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "expandable_segments:True"
 import hydra
 from omegaconf import DictConfig
 from src.data_download import get_dataset
 from src.train_classifier import run_classification
 from src.train_ssl import run_simclr_cap24_weighted_subject_wise
 from src.utils import get_available_device
-import os
 # Torch autocast has changed its interface and gives a FutureWarning
 import warnings
 warnings.simplefilter(action='ignore', category=FutureWarning)
