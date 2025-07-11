@@ -65,13 +65,15 @@ def train_model(
     epochs_since_best_loss = -burn_in_epochs
     hmm = None
     get_obs = None
-    x_axis = 'Epoch'
+    x_axis_loss = f'Loss Epoch (Fold {num_fold})'
+    x_axis_val_loss = f'Loss Epoch (Fold {num_fold})'
+    x_axis_val_kappa = f'Kappa Epoch (Fold {num_fold})'
     y_axis_loss = f"Training Loss (Fold {num_fold})"
     y_axis_val_loss = f"Validation Loss (Fold {num_fold})"
     y_axis_val_kappa = f"Validation Kappa (Fold {num_fold})"
-    wandb_run.define_metric(name=y_axis_loss, step_metric=x_axis)
-    wandb_run.define_metric(name=y_axis_val_loss, step_metric=x_axis)
-    wandb_run.define_metric(name=y_axis_val_kappa, step_metric=x_axis)
+    wandb_run.define_metric(name=y_axis_loss, step_metric=x_axis_loss)
+    wandb_run.define_metric(name=y_axis_val_loss, step_metric=x_axis_val_loss)
+    wandb_run.define_metric(name=y_axis_val_kappa, step_metric=x_axis_val_kappa)
     while current_epoch < num_epochs:
         print(f"Current epoch: {current_epoch+1}, Best loss epoch: {best_loss_epoch}, Best kappa epoch: {best_kappa_epoch}, Epochs since best loss: {epochs_since_best_loss}")
         if epochs_since_best_loss >= patience:
@@ -121,10 +123,16 @@ def train_model(
 
             # writer.add_scalar(f"Validation Kappa (Fold {num_fold})", val_kappa, t)
             wandb_run.log({
-                y_axis_val_loss: val_loss,
+                x_axis_loss: current_epoch + 1,
                 y_axis_loss: train_loss,
+            })
+            wandb_run.log({
+                x_axis_val_loss: current_epoch + 1,
+                y_axis_val_loss: val_loss,
+            })
+            wandb_run.log({
+                x_axis_val_kappa: current_epoch + 1,
                 y_axis_val_kappa: val_kappa,
-                x_axis: current_epoch+1
             })
 
 
