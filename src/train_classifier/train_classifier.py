@@ -81,8 +81,6 @@ def train_model(
 
         train_loss = train_loop(train_dataloader, my_model, device, loss_fn, optimizer)
 
-        wandb_run.log({y_axis_loss: train_loss, x_axis: current_epoch+1})
-
         """loss, acc, balanced_acc = test_loop(
             val_dataloader, my_model, device, loss_fn, num_classes
         )"""
@@ -124,12 +122,11 @@ def train_model(
             # writer.add_scalar(f"Validation Kappa (Fold {num_fold})", val_kappa, t)
             wandb_run.log({
                 y_axis_val_loss: val_loss,
-                x_axis: current_epoch+1
-            })
-            wandb_run.log({
+                y_axis_loss: train_loss,
                 y_axis_val_kappa: val_kappa,
                 x_axis: current_epoch+1
             })
+
 
 
 
