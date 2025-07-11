@@ -12,6 +12,7 @@ from src.torch_datasets import SSLazyAugDatasetSubjectWise, SSRawDataset, Combin
 import wandb
 import inspect
 import time
+import hashlib
 
 
 def run_simclr_cap24_weighted_subject_wise(dataset_cfg, augs, paths_cfg, low_pass_freq=15, sampling_rate=30,
@@ -52,7 +53,7 @@ def run_simclr_cap24_weighted_subject_wise(dataset_cfg, augs, paths_cfg, low_pas
     frame = inspect.currentframe()
     args, _, _, values = inspect.getargvalues(frame)
     input_dict = {arg: values[arg] for arg in args if arg in values}
-    hashed_name = abs(hash(str(input_dict)))
+    hashed_name = abs(int(hashlib.sha256(str(input_dict).encode('utf-8')).hexdigest()[:8], 16)-(1<<63))
 
 
     # Initialize wandb
@@ -229,7 +230,7 @@ def run_simclr_cap24_weighted_subject_wise(dataset_cfg, augs, paths_cfg, low_pas
     )
     # Save the best model (best_model already is a state_dict)
 
-    torch.save(best_model, os.path.join(paths_cfg.ssl_model_checkpoints, f"best_model_backbone_{backbone_name}_{augs_str}_hash_{hashed_name}.pt"))
+    torch.save(best_model, os.path.join(paths_cfg.ssl_model_checkpoints, f"best_model_backbone_{backbone_name}_{augs_str}_hash_{str(hashed_name)}.pt"))
     run.finish()
 
 
