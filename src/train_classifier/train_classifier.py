@@ -65,6 +65,13 @@ def train_model(
     epochs_since_best_loss = -burn_in_epochs
     hmm = None
     get_obs = None
+    x_axis = 'Epoch'
+    y_axis_loss = f"Training Loss (Fold {num_fold})"
+    y_axis_val_loss = f"Validation Loss (Fold {num_fold})"
+    y_axis_val_kappa = f"Validation Kappa (Fold {num_fold})"
+    wandb_run.define_metric(name=y_axis_loss, step_metric=x_axis)
+    wandb_run.define_metric(name=y_axis_val_loss, step_metric=x_axis)
+    wandb_run.define_metric(name=y_axis_val_kappa, step_metric=x_axis)
     while current_epoch < num_epochs:
         print(f"Current epoch: {current_epoch+1}, Best loss epoch: {best_loss_epoch}, Best kappa epoch: {best_kappa_epoch}, Epochs since best loss: {epochs_since_best_loss}")
         if epochs_since_best_loss >= patience:
@@ -74,7 +81,7 @@ def train_model(
 
         train_loss = train_loop(train_dataloader, my_model, device, loss_fn, optimizer)
 
-        wandb_run.log({f"Training Loss (Fold {num_fold})": train_loss}, step=current_epoch+1)
+        wandb_run.log({y_axis_loss: train_loss, x_axis: current_epoch+1})
 
         """loss, acc, balanced_acc = test_loop(
             val_dataloader, my_model, device, loss_fn, num_classes
@@ -115,8 +122,14 @@ def train_model(
                 best_kappa_model = copy.deepcopy(my_model.state_dict())
 
             # writer.add_scalar(f"Validation Kappa (Fold {num_fold})", val_kappa, t)
-            wandb_run.log({f"Validation Loss (Fold {num_fold})": val_loss}, step=current_epoch+1)
-            wandb_run.log({f"Validation Kappa (Fold {num_fold})": val_kappa}, step=current_epoch+1)
+            wandb_run.log({
+                y_axis_val_loss: val_loss,
+                x_axis: current_epoch+1
+            })
+            wandb_run.log({
+                y_axis_val_kappa: val_kappa,
+                x_axis: current_epoch+1
+            })
 
 
 
@@ -345,7 +358,7 @@ def compute_report(
         f"Confusion Matrix: {confusion_matrix} \n"
         f"Classification Report:\n {report}"
     )
-    wandb_run.log({f"Best Kappa Model Report (Fold {num_fold})": final_str}, step=0)
+    wandb_run.log({f"Best Kappa Model Report (Fold {num_fold})": final_str})
     wandb_run.log({
         f"Best Kappa (Fold {num_fold})": val_kappa,
         f"Best F1 (Fold {num_fold})": val_balanced_f1,
@@ -354,7 +367,7 @@ def compute_report(
         f"ROC AUC Micro (Fold {num_fold})": roc_auc_micro,
         f"PR AUC (Fold {num_fold})": pr_auc_macro,
         f"PR AUC Micro (Fold {num_fold})": pr_auc_micro,
-    }, step=0)
+    })
 
     return final_str, val_balanced_f1, val_kappa, balanced_acc
 
