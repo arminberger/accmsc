@@ -39,6 +39,7 @@ def run_classification(
     viterbi=False,
     batch_norm_after_feature_extractor=False,
     burn_in_epochs=0,
+    batch_size=64,
 ):
     """
 
@@ -290,7 +291,7 @@ def run_classification(
                 sampler = get_weighted_sampler(train)
             train_dataloader = DataLoader(
                 train,
-                batch_size=64,
+                batch_size=batch_size,
                 shuffle=True if sampler is None else False,
                 sampler=sampler,
             )
@@ -392,7 +393,7 @@ def run_classification(
 
             train_dataloader = DataLoader(
                 train,
-                batch_size=64,
+                batch_size=batch_size,
                 shuffle=(True if sampler is None else False),
                 sampler=sampler,
             )
@@ -497,7 +498,7 @@ def run_classification(
 
         train_dataloader = DataLoader(
             train,
-            batch_size=64,
+            batch_size=batch_size,
             shuffle=(True if sampler is None else False),
             sampler=sampler,
         )

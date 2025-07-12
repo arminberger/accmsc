@@ -62,6 +62,7 @@ def main(cfg: DictConfig):
             viterbi=False,
             batch_norm_after_feature_extractor=False,
             burn_in_epochs=cfg.classifier.ml_config.burn_in_epochs,
+            batch_size=cfg.classifier.ml_config.batch_size,
         )
     elif cfg.task == "train_ssl":
         print("Training SSL")
