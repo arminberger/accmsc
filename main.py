@@ -48,7 +48,7 @@ def main(cfg: DictConfig):
             checkpoint_save_path=cfg.paths.classifier_model_checkpoints,
             model_params={'augs': list(cfg.classifier.backbone_augs), 'hash': cfg.classifier.feature_extractor.hash},
             train_test_split=0.2,
-            weighted_sampling=True,
+            weighted_sampling=False,
             freeze_foundational_model=cfg.classifier.ml_config.freeze_backbone,
             precompute_features=True if cfg.classifier.ml_config.freeze_backbone else False,
             num_epochs=cfg.classifier.ml_config.num_epochs,
