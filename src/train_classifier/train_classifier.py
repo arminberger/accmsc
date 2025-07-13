@@ -40,7 +40,7 @@ def train_model(
     with torch.no_grad():
         num_classes = my_model(sample).shape[1]
     my_model.train()
-    learning_rate = 1e-4
+    learning_rate = 1e-5
     loss_fn = torch.nn.CrossEntropyLoss()
     optimizer = torch.optim.Adam(
         my_model.parameters(), lr=learning_rate, weight_decay=weight_decay
