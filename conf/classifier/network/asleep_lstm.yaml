@@ -2,4 +2,4 @@ name: asleep_lstm
 prev_minutes: 90
 post_minutes: 0
 clip_gradients: true
-pad_input: false
+pad_input: true
