@@ -45,7 +45,7 @@ class ListDatasetPadded(Dataset):
         data = []
         label = self.dataset_list[first_index][sequence_last_index][1]
         for i in range(sequence_first_index, sequence_last_index + 1):
-            data.append(self.dataset_list[i][0])
+            data.append(self.dataset_list[first_index][i][0])
         # Now pad with zeros if necessary
         seq_length = len(data)
         if len(data) < self.sequence_length:

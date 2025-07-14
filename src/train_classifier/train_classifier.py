@@ -40,7 +40,8 @@ def train_model(
     sample = train_dataloader.dataset[0][0].unsqueeze(0).to(device)
     my_model.eval()
     with torch.no_grad():
-        num_classes = my_model(sample).shape[1]
+        num_classes = my_model(sample, torch.tensor(1).unsqueeze(0)).shape[1]
+        print(f'Number of classes: {num_classes}')
     my_model.train()
 
     loss_fn = torch.nn.CrossEntropyLoss()
