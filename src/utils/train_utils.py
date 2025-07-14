@@ -2,15 +2,24 @@ import torch
 from tqdm import tqdm
 import math
 
-def classification_train_loop(dataloader, model, device, loss_fn, optimizer):
+def classification_train_loop(dataloader, model, device, loss_fn, optimizer, model_is_lstm):
     model.train()
     loss_total = None
-    for batch, (X, y) in enumerate(progress := tqdm(dataloader)):
+    for batch, data in enumerate(progress := tqdm(dataloader)):
+        if model_is_lstm:
+            # y contains the sequence length
+            X, y, seq_length = data
+        else:
+            X, y = data
         optimizer.zero_grad()
         # Compute prediction and loss
         X = X.to(device)
         y = y.to(device)
-        pred = model(X)
+        if model_is_lstm:
+            # For LSTM, we need to pass the sequence length
+            pred = model(X, seq_length)
+        else:
+            pred = model(X)
         loss = loss_fn(pred, y)
 
 

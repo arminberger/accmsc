@@ -2,3 +2,4 @@ name: naive_mlp
 prev_minutes: 90
 post_minutes: 0
 clip_gradients: false
+is_lstm: false

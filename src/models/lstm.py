@@ -1,5 +1,7 @@
 from torch import nn
+from torch.nn.utils.rnn import pack_padded_sequence
 import torch
+
 
 class LSTMModel(nn.Module):
     def __init__(
@@ -56,7 +58,7 @@ class LSTMModel(nn.Module):
             dropout=dropout,
         )
         output_size = (
-            hidden_dim * self.d_param
+            hidden_dim * self.d_param * num_layers
             if not use_all_hidden
             else hidden_dim * self.d_param * sequence_length
         )
@@ -70,13 +72,20 @@ class LSTMModel(nn.Module):
             nn.Linear(256, num_classes),
         )
 
-    def forward(self, x):
+    def forward(self, x, seq_lengths):
+        """
+        Forward pass of the model.
+        :param x: The input has to be of size (batch_size, sequence_length, feature_vector_size).
+        :param seq_lengths: The sequence lengths of the input. This is used to pack the sequence and is of size (batch_size,).
+        :return:
+        """
         # Initializing hidden state for first input using method defined below
         batch_size = x.size(0)
         hidden = self.init_hidden(batch_size)
         cell = self.init_cell(batch_size)
 
         if self.feature_extractor is not None:
+            raise NotImplementedError('Fine tuning of feature extractor is not implemented yet')
             # First pass through the feature extractor
             self.feature_extractor = self.feature_extractor.to(self.device)
             # x should be of size (batch_size, window_size) + <feature_extractor input size>
@@ -91,21 +100,26 @@ class LSTMModel(nn.Module):
             x = x_out
             x = x.to(self.device)
 
+        # We have to pack the sequence to avoid padding issues
+        x = pack_padded_sequence(x, seq_lengths.cpu(), batch_first=True, enforce_sorted=False)
         # Passing in the input and hidden state into the model and obtaining outputs
         # x should be of size (batch_size, window_size, input_size)
-        out, hidden = self.lstm(x, (hidden, cell))
+        out, (h_n, c_n) = self.lstm(x, (hidden, cell))
 
         # Reshaping the outputs such that it can be fit into the fully connected layer
         # Output has format (batch_size, self.windows_size, self.d_param*self.hidden_dim)
-        out = out.reshape(batch_size, self.sequence_length, self.d_param * self.h_out)
-        h_n = out[:, -1, :]
+        # out = out.reshape(batch_size, self.sequence_length, self.d_param * self.h_out)
+        # h_n = out[:, -1, :]
+
+        h_n = h_n.permute(1, 0, 2)
+        h_n_flat = h_n.flatten(start_dim=1)
 
         if not self.use_all_hidden:
-            h_n = h_n.reshape(batch_size, -1)
-            output = self.linear_classifier(h_n)
+            output = self.linear_classifier(h_n_flat)
         else:
-            out = out.reshape(batch_size, -1)
-            output = self.linear_classifier(out)
+            raise NotImplementedError('Cannot use all hidden states with LSTM yet')
+            #out = out.reshape(batch_size, -1)
+            #output = self.linear_classifier(out)
         return output
 
     def init_hidden(self, batch_size):

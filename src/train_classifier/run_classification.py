@@ -2,7 +2,7 @@ import math
 import torch
 from src.data_preprocessing import make_dataset
 from src.utils import split_subject_wise
-from src.torch_datasets import AccDataset, PrecomputedFeaturesDataset, ListDataset
+from src.torch_datasets import AccDataset, PrecomputedFeaturesDataset, ListDataset, ListDatasetPadded
 from src.train_classifier import get_full_classification_model, get_feature_extractor
 import random
 from torch.utils.data import DataLoader
@@ -11,6 +11,7 @@ from sklearn.model_selection import KFold
 from src.train_classifier import train_model
 import wandb
 import time
+
 
 def run_classification(
     feature_extractor_name,
@@ -72,10 +73,7 @@ def run_classification(
     Returns:
 
     """
-
-
-
-
+    classifier_is_lstm = classifier_cfg.is_lstm
     torch.manual_seed(seed)
     dataset_name = dataset_cfg.name
     if not freeze_foundational_model and precompute_features:
@@ -108,6 +106,11 @@ def run_classification(
     pad_input = classifier_cfg.pad_input
     prev_window = math.ceil(classifier_cfg.prev_minutes * 60.0 / input_len_sec)
     post_window = math.ceil(classifier_cfg.post_minutes * 60.0 / input_len_sec)
+    # post_window should always be 0 since it is not supported anymore
+    if post_window != 0:
+        raise ValueError(
+            "post_window should always be 0 since it is not supported anymore"
+        )
 
     wandb_run = wandb.init(project=f'Classifier Training Final (lower LR)', config={
         'feature_extractor_name': feature_extractor_name,
@@ -213,7 +216,6 @@ def run_classification(
     except:
         pass
 
-
     if looocv:
         f1s = []
         balaccs = []
@@ -230,22 +232,22 @@ def run_classification(
                 feature_extractor_filename,
             ) = (
                 get_full_classification_model(
-                feature_extractor_name=feature_extractor_name,
-                feature_extractor_local_path=feature_extractor_local_path,
-                backbone_model_params=model_params,
-                classifier_cfg=classifier_cfg,
-                device=device,
-                num_classes=num_classes,
-                freeze_foundational_model=freeze_foundational_model,
-                assemble_feature_extractor=not precompute_features,
-                return_feature_ext_filename=True,
-                dropout=classifier_drouput,
-                batch_norm_after_feature_extractor=batch_norm_after_feature_extractor,
-                prev_window=prev_window,
-                post_window=post_window,
-            ))
+                    feature_extractor_name=feature_extractor_name,
+                    feature_extractor_local_path=feature_extractor_local_path,
+                    backbone_model_params=model_params,
+                    classifier_cfg=classifier_cfg,
+                    device=device,
+                    num_classes=num_classes,
+                    freeze_foundational_model=freeze_foundational_model,
+                    assemble_feature_extractor=not precompute_features,
+                    return_feature_ext_filename=True,
+                    dropout=classifier_drouput,
+                    batch_norm_after_feature_extractor=batch_norm_after_feature_extractor,
+                    prev_window=prev_window,
+                    post_window=post_window,
+                ))
             # Split data into train_list and test_list
-            train_list = dataset_list[:i] + dataset_list[i + 1 :]
+            train_list = dataset_list[:i] + dataset_list[i + 1:]
             test_list = [dataset_list[i]]
             # Further split train_list into train and val
             train_list, val_list = split_subject_wise(
@@ -253,19 +255,19 @@ def run_classification(
                 test_ratio=train_test_split if do_select_model else 0,
                 random_gen=random.Random(seed + i),
             )
-            train = ListDataset(
+            train = get_appropriate_dataset(
+                is_lstm=classifier_is_lstm,
+                sequence_length=prev_window,
                 dataset_list=train_list,
-                prev_elements=prev_window,
-                post_elements=post_window,
                 pad_sequence=pad_input,
             )
 
             val_dataloader = [
                 DataLoader(
-                    ListDataset(
+                    get_appropriate_dataset(
+                        is_lstm=classifier_is_lstm,
+                        sequence_length=prev_window,
                         dataset_list=[x],
-                        prev_elements=prev_window,
-                        post_elements=post_window,
                         pad_sequence=pad_input,
                     ),
                     batch_size=512,
@@ -275,10 +277,10 @@ def run_classification(
             ]
             test_dataloader = [
                 DataLoader(
-                    ListDataset(
+                    get_appropriate_dataset(
+                        is_lstm=classifier_is_lstm,
+                        sequence_length=prev_window,
                         dataset_list=[x],
-                        prev_elements=prev_window,
-                        post_elements=post_window,
                         pad_sequence=pad_input,
                     ),
                     batch_size=512,
@@ -299,8 +301,14 @@ def run_classification(
             # Train model
             f1, kappa, balacc = train_model(
                 my_model=my_model,
+                model_is_lstm=classifier_is_lstm,
                 train_dataloader=train_dataloader,
-                train_list=[ListDataset([x], prev_elements=prev_window, post_elements=post_window, pad_sequence=pad_input) for x in train_list],
+                train_list=[get_appropriate_dataset(
+                    is_lstm=classifier_is_lstm,
+                    sequence_length=prev_window,
+                    dataset_list=[x],
+                    pad_sequence=pad_input,
+                ) for x in train_list],
                 test_dataloaders=test_dataloader,
                 val_dataloaders=val_dataloader,
                 checkpoint_save_name=checkpoint_save_name,
@@ -371,8 +379,8 @@ def run_classification(
                 post_window=post_window,
             )
 
-            print(f"Cross validation fold {k+1}")
-            checkpoint_save_name_k = checkpoint_save_name + f"_fold_{k+1}"
+            print(f"Cross validation fold {k + 1}")
+            checkpoint_save_name_k = checkpoint_save_name + f"_fold_{k + 1}"
             train_list_k = [dataset_list[i] for i in train_indices]
             test_list_k = [dataset_list[i] for i in test_indices]
             # Split into train and val
@@ -381,10 +389,10 @@ def run_classification(
                 test_ratio=train_test_split if do_select_model else 0,
                 random_gen=random.Random(seed + k),
             )
-            train = ListDataset(
+            train = get_appropriate_dataset(
+                is_lstm=classifier_is_lstm,
+                sequence_length=prev_window,
                 dataset_list=train_list_k,
-                prev_elements=prev_window,
-                post_elements=post_window,
                 pad_sequence=pad_input,
             )
             sampler = None
@@ -400,10 +408,10 @@ def run_classification(
 
             test_dataloader = [
                 DataLoader(
-                    ListDataset(
+                    get_appropriate_dataset(
+                        is_lstm=classifier_is_lstm,
+                        sequence_length=prev_window,
                         dataset_list=[x],
-                        prev_elements=prev_window,
-                        post_elements=post_window,
                         pad_sequence=pad_input,
                     ),
                     batch_size=512,
@@ -414,10 +422,10 @@ def run_classification(
             val_dataloader = (
                 [
                     DataLoader(
-                        ListDataset(
+                        get_appropriate_dataset(
+                            is_lstm=classifier_is_lstm,
+                            sequence_length=prev_window,
                             dataset_list=[x],
-                            prev_elements=prev_window,
-                            post_elements=post_window,
                             pad_sequence=pad_input,
                         ),
                         batch_size=512,
@@ -432,8 +440,15 @@ def run_classification(
             f1, kappa, balacc, report = train_model(
                 my_model=my_model,
                 train_dataloader=train_dataloader,
-                train_list=[ListDataset([x], prev_elements=prev_window, post_elements=post_window, pad_sequence=pad_input) for x
-                            in train_list_k],
+                model_is_lstm=classifier_is_lstm,
+                train_list=[
+                    get_appropriate_dataset(
+                        is_lstm=classifier_is_lstm,
+                        sequence_length=prev_window,
+                        dataset_list=[x],
+                        pad_sequence=pad_input,
+                    ) for x
+                    in train_list_k],
                 test_dataloaders=test_dataloader,
                 val_dataloaders=val_dataloader,
                 checkpoint_save_name=checkpoint_save_name_k,
@@ -481,17 +496,22 @@ def run_classification(
             dataset_list, test_ratio=train_test_split, random_gen=random.Random(seed)
         )
 
-        test_dataloader = [DataLoader(ListDataset(
-            dataset_list=[x], prev_elements=prev_window, post_elements=post_window, pad_sequence=pad_input
+        test_dataloader = [DataLoader(get_appropriate_dataset(
+            is_lstm=classifier_is_lstm,
+            sequence_length=prev_window,
+            dataset_list=[x],
+            pad_sequence=pad_input,
         ), batch_size=512, shuffle=False) for x in test_list]
         print("Train without cross validation")
         train_list, val_list = split_subject_wise(
             train_list, test_ratio=train_test_split, random_gen=random.Random(seed)
         )
         print(f"Train size (subjects): {len(train_list)}")
-        train = ListDataset(
-            dataset_list=train_list, prev_elements=prev_window, post_elements=post_window, pad_sequence=pad_input
-        )
+        train = get_appropriate_dataset(is_lstm=classifier_is_lstm,
+                                        sequence_length=prev_window,
+                                        dataset_list=train_list,
+                                        pad_sequence=pad_input,
+                                        )
         sampler = None
         if weighted_sampling:
             sampler = get_weighted_sampler(train)
@@ -503,13 +523,23 @@ def run_classification(
             sampler=sampler,
         )
 
-        val_dataloader = [DataLoader(ListDataset(
-            dataset_list=[x], prev_elements=prev_window, post_elements=post_window, pad_sequence=pad_input
+        val_dataloader = [DataLoader(get_appropriate_dataset(
+            is_lstm=classifier_is_lstm,
+            sequence_length=prev_window,
+            dataset_list=[x],
+            pad_sequence=pad_input,
         ), batch_size=512, shuffle=False) for x in val_list]
         train_model(
             my_model=my_model,
             train_dataloader=train_dataloader,
-            train_list=[ListDataset([x], prev_elements=prev_window, post_elements=post_window, pad_sequence=pad_input) for x in
+            model_is_lstm=classifier_is_lstm,
+            train_list=[get_appropriate_dataset(
+                is_lstm=classifier_is_lstm,
+                sequence_length=prev_window,
+                dataset_list=[x],
+                pad_sequence=pad_input,
+            )
+                        for x in
                         train_list],
             test_dataloaders=test_dataloader,
             val_dataloaders=val_dataloader,
@@ -531,8 +561,8 @@ def get_weighted_sampler(train):
     train_indices_ws = list(range(len(train)))
     train_labels_ws = [train[i][1] for i in train_indices_ws]
     class_counts_dict = {
-            t: len(np.asarray(train_labels_ws == t).nonzero()[0])
-            for t in np.unique(train_labels_ws)}
+        t: len(np.asarray(train_labels_ws == t).nonzero()[0])
+        for t in np.unique(train_labels_ws)}
     class_weights_dict = {}
     for cls, count in class_counts_dict.items():
         class_weights_dict[cls] = 1 / count
@@ -545,3 +575,19 @@ def get_weighted_sampler(train):
     )
     print(f'Weighted sampler seed: {sampler.generator.initial_seed()}')
     return sampler
+
+
+def get_appropriate_dataset(is_lstm, sequence_length, dataset_list, pad_sequence):
+    if is_lstm:
+        # Here pad sequence has no effect–should remove that param from the config at some point
+        return ListDatasetPadded(
+            dataset_list=dataset_list,
+            sequence_length=sequence_length,
+        )
+    else:
+        return ListDataset(
+            dataset_list=dataset_list,
+            prev_elements=sequence_length,
+            post_elements=0,
+            pad_sequence=pad_sequence,
+        )

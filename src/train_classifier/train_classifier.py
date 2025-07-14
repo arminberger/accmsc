@@ -16,6 +16,7 @@ import copy
 
 def train_model(
     my_model,
+    model_is_lstm,
     train_dataloader,
     train_list,
     test_dataloaders,
@@ -74,7 +75,7 @@ def train_model(
             break
         epochs_since_best_loss = epochs_since_best_loss + 1
 
-        train_loss = train_loop(train_dataloader, my_model, device, loss_fn, optimizer)
+        train_loss = train_loop(train_dataloader, my_model, device, loss_fn, optimizer, model_is_lstm)
 
         """loss, acc, balanced_acc = test_loop(
             val_dataloader, my_model, device, loss_fn, num_classes
@@ -86,6 +87,7 @@ def train_model(
                 my_model,
                 device,
                 val_dataloaders,
+                model_is_lstm=model_is_lstm,
                 return_unreduced=True,
                 dataloader_per_subject=True,
             )
@@ -229,6 +231,7 @@ def compute_report(
     test_dataloader,
     epoch,
     wandb_run,
+    model_is_lstm,
     num_fold=0,
     labels_transform=None,
     viterbi=None,
@@ -243,6 +246,7 @@ def compute_report(
         dataloader_per_subject=dataloader_per_subject,
         viterbi=viterbi,
         convert_sequence=convert_sequence,
+        model_is_lstm=model_is_lstm,
     )
 
     if labels_transform is not None:
@@ -388,10 +392,12 @@ def compute_preds(
     my_model,
     device,
     test_dataloaders,
+    model_is_lstm,
     return_unreduced=False,
     viterbi=None,
     convert_sequence=None,
     dataloader_per_subject=False,
+
 ):
     if not dataloader_per_subject:
         test_dataloaders = [test_dataloaders]
@@ -404,9 +410,16 @@ def compute_preds(
             preds_reduced = None
             preds = None
             targets = []
-            for X, y in test_dataloader:
+            for data in test_dataloader:
+                if model_is_lstm:
+                    X, y, seq_length = data
+                else:
+                    X, y = data
                 X = X.to(device)
-                pred = my_model(X)
+                if model_is_lstm:
+                    pred = my_model(X, seq_length)
+                else:
+                    pred = my_model(X)
 
                 if preds is None:
                     preds = pred.numpy(force=True)
@@ -454,7 +467,7 @@ def getHMM(train_list, val_loaders, model, device, num_classes, train=False, n_b
     train_list = [DataLoader(x, batch_size=1024, shuffle=False) for x in train_list]
     train_list = [
         compute_preds(
-            model, device, x, return_unreduced=True, dataloader_per_subject=False
+            model, device, x, return_unreduced=True, dataloader_per_subject=False, model_is_lstm=None,
         )
         for x in train_list
     ]
@@ -462,7 +475,7 @@ def getHMM(train_list, val_loaders, model, device, num_classes, train=False, n_b
     labels_train = [x[1].numpy(force=True) for x in train_list]
     val_loaders = [
         compute_preds(
-            model, device, x, return_unreduced=True, dataloader_per_subject=False
+            model, device, x, return_unreduced=True, dataloader_per_subject=False, model_is_lstm=None,
         )
         for x in val_loaders
     ]
