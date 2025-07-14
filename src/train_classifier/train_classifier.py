@@ -33,6 +33,7 @@ def train_model(
     viterbi=False,
     return_report=False,
     burn_in_epochs=5,
+    learning_rate = 1e-5
 ):
     my_model.to(device)
     sample = train_dataloader.dataset[0][0].unsqueeze(0).to(device)
@@ -40,7 +41,7 @@ def train_model(
     with torch.no_grad():
         num_classes = my_model(sample).shape[1]
     my_model.train()
-    learning_rate = 1e-5
+
     loss_fn = torch.nn.CrossEntropyLoss()
     optimizer = torch.optim.Adam(
         my_model.parameters(), lr=learning_rate, weight_decay=weight_decay
