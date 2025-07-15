@@ -187,8 +187,11 @@ def get_classification_model(
         )
     if clip_gradients:
         # Clip gradients to avoid exploding gradients
-        for p in model.parameters():
-            p.register_hook(lambda grad: torch.clamp(grad, -1, 1))
+        for name, param in model.named_parameters():
+            if name[:4] == "lstm":
+                param.register_hook(
+                    lambda grad: torch.clamp(grad, -1, 1)
+                )
     return model
 
 
