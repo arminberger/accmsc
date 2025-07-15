@@ -1,6 +1,6 @@
 name: lstm_classifier
 prev_minutes: 90
 post_minutes: 0
-clip_gradients: false
+clip_gradients: true
 pad_input: true
 is_lstm: true

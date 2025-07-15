@@ -34,7 +34,7 @@ def train_model(
     viterbi=False,
     return_report=False,
     burn_in_epochs=5,
-    learning_rate = 1e-5
+    learning_rate = 1e-3
 ):
     my_model.to(device)
     sample = train_dataloader.dataset[0][0].unsqueeze(0).to(device)

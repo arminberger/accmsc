@@ -57,7 +57,7 @@ def main(cfg: DictConfig):
             classifier_drouput=0,
             cross_validation=cfg.classifier.ml_config.num_folds,
             looocv=False,
-            weight_decay=1e-4,
+            weight_decay=cfg.classifier.ml_config.weight_decay,
             do_select_model=True,
             viterbi=False,
             batch_norm_after_feature_extractor=False,

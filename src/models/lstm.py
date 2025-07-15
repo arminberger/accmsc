@@ -1,6 +1,7 @@
 from torch import nn
 from torch.nn.utils.rnn import pack_padded_sequence
 import torch
+from src.models import weight_init
 
 
 class LSTMModel(nn.Module):
@@ -57,6 +58,7 @@ class LSTMModel(nn.Module):
             batch_first=True,
             dropout=dropout,
         )
+        self.lstm.apply(weight_init)
         output_size = (
             hidden_dim * self.d_param * num_layers
             if not use_all_hidden
@@ -65,10 +67,8 @@ class LSTMModel(nn.Module):
         self.linear_classifier = nn.Sequential(
             nn.Linear(output_size, 256),
             nn.ReLU(),
-            nn.Dropout(0.5),
             nn.Linear(256, 256),
             nn.ReLU(),
-            nn.Dropout(0.5),
             nn.Linear(256, num_classes),
         )
 
@@ -104,7 +104,7 @@ class LSTMModel(nn.Module):
         x = pack_padded_sequence(x, seq_lengths.cpu(), batch_first=True, enforce_sorted=False)
         # Passing in the input and hidden state into the model and obtaining outputs
         # x should be of size (batch_size, window_size, input_size)
-        out, (h_n, c_n) = self.lstm(x, (hidden, cell))
+        out, (h_n, c_n) = self.lstm(x)
 
         # Reshaping the outputs such that it can be fit into the fully connected layer
         # Output has format (batch_size, self.windows_size, self.d_param*self.hidden_dim)
