@@ -1,7 +1,7 @@
 from torch import nn
 from torch.nn.utils.rnn import pack_padded_sequence
 import torch
-from src.models import weight_init
+from src.models.weight_init import weight_initalization
 
 
 class LSTMModel(nn.Module):
@@ -58,7 +58,7 @@ class LSTMModel(nn.Module):
             batch_first=True,
             dropout=dropout,
         )
-        self.lstm.apply(weight_init)
+        self.lstm.apply(weight_initalization)
         output_size = (
             hidden_dim * self.d_param * num_layers
             if not use_all_hidden

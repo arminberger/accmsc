@@ -1,7 +1,7 @@
 import torch.nn.init as init
 import torch.nn as nn
 
-def weight_init(m):
+def weight_initalization(m):
     '''
     Usage:
         model = Model()
@@ -67,3 +67,5 @@ def weight_init(m):
                 init.orthogonal_(param.data)
             else:
                 init.normal_(param.data)
+    else:
+        print('Unrecognized module type')
