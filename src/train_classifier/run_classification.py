@@ -112,7 +112,7 @@ def run_classification(
             "post_window should always be 0 since it is not supported anymore"
         )
 
-    wandb_run = wandb.init(project=f'Classifier Training vFINAL', config={
+    wandb_run = wandb.init(project=f'Classifier Training vFINAL clip true', config={
         'feature_extractor_name': feature_extractor_name,
         'classifier_name': classifier_name,
         'dataset_name': dataset_name,
