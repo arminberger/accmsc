@@ -49,6 +49,16 @@ def run_simclr_cap24_weighted_subject_wise(dataset_cfg, augs, paths_cfg, low_pas
     Returns:
 
     """
+    # Set seeds for reproducibility
+    seed = 42
+    random.seed(seed)
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+    torch.cuda.manual_seed(seed)
+    torch.cuda.manual_seed_all(seed)
+    torch.backends.cudnn.deterministic = True
+    torch.backends.cudnn.benchmark = False
+
     # Hash all the parameters to create a unique run name
     frame = inspect.currentframe()
     args, _, _, values = inspect.getargvalues(frame)
@@ -57,7 +67,7 @@ def run_simclr_cap24_weighted_subject_wise(dataset_cfg, augs, paths_cfg, low_pas
 
 
     # Initialize wandb
-    run = wandb.init(project='SSL Scaling Laws', config={
+    run = wandb.init(project='SSL Augmentation Combinations', config={
         'augs': augs,
         'low_pass_freq': low_pass_freq,
         'sampling_rate': sampling_rate,

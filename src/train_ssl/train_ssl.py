@@ -141,6 +141,7 @@ def train_simclr_precomputed_augs_per_subject(
                 num_workers=0,
                 drop_last=True,
                 pin_memory=True,
+                generator=torch.Generator().manual_seed(seed + epoch + i),
             )
             total_train_loss = total_train_loss + train_epoch(
                 DEVICE,
@@ -284,6 +285,3 @@ def compute_validation_precomputed_augs(
                         )
                         total_loss = torch.add(total_loss, loss)
     return total_loss.item()
-
-
-
