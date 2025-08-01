@@ -67,7 +67,7 @@ def run_simclr_cap24_weighted_subject_wise(dataset_cfg, augs, paths_cfg, low_pas
 
 
     # Initialize wandb
-    run = wandb.init(project='SSL Augmentation Combinations', config={
+    run = wandb.init(project='Best MSc SSL', config={
         'augs': augs,
         'low_pass_freq': low_pass_freq,
         'sampling_rate': sampling_rate,
