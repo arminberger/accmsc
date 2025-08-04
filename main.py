@@ -46,7 +46,7 @@ def main(cfg: DictConfig):
             test_label_transform_dict=cfg.classifier.test_label_transform,
             paths_cfg=cfg.paths,
             checkpoint_save_path=cfg.paths.classifier_model_checkpoints,
-            model_params={'augs': list(cfg.classifier.backbone_augs), 'hash': cfg.classifier.feature_extractor.hash},
+            model_params={'augs': list(cfg.classifier.backbone_augs), 'hash': cfg.classifier.feature_extractor.hash, 'hash_str': str(cfg.classifier.feature_extractor.hash)},
             train_test_split=0.2,
             weighted_sampling=True,
             freeze_foundational_model=cfg.classifier.ml_config.freeze_backbone,
