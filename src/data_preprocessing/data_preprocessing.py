@@ -41,6 +41,11 @@ def make_dataset(
             cache_path,
         )
 
+    if loaded_from_cache:
+        print("Dataset loaded from cache")
+    else:
+        print("Dataset not loaded from cache")
+
     if loaded_from_cache and dataset_cfg.has_labels:
         return motion_data_list, labels_list, subject_ids
     elif loaded_from_cache and not dataset_cfg.has_labels:
