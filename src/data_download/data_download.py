@@ -32,7 +32,7 @@ def get_dataset(name, download_dir, archive, url):
 
         # Extract the contents and clean up
         print(f'Extracting {archive} file of {name} dataset...')
-        if archive == 'zip':
+        if archive == 'zip' or zipfile.is_zipfile(filepath):
             with zipfile.ZipFile(filepath, 'r') as zip_ref:
                 zip_ref.extractall(dataset_path)
         elif archive == 'tar':
