@@ -1,6 +1,6 @@
 name: geneactiv
 url: https://polybox.ethz.ch/index.php/s/W8jtM0ZdmdWvRBG/download
-is_zipped: true
+archive: zip
 sampling_rate: 100
 unpacked_path: geneactiv
 has_labels: true

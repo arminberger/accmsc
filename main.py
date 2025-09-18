@@ -32,7 +32,7 @@ def main(cfg: DictConfig):
             get_dataset(
                 name=datasets_to_download[dataset].name,
                 download_dir=cfg.paths.datasets,
-                is_zip=datasets_to_download[dataset].is_zipped,
+                archive=datasets_to_download[dataset].archive,
                 url=datasets_to_download[dataset].url
             )
     elif cfg.task == "train_classifier":

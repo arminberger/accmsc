@@ -3,24 +3,25 @@ import shutil
 import os
 import zipfile
 import subprocess
+import tarfile
 
-def get_dataset(name, download_dir, is_zip, url):
+def get_dataset(name, download_dir, archive, url):
     """
     Downloads and extracts a dataset from a given URL.
     
     Args:
         name: Name of the dataset
         download_dir: Directory to download the dataset to
-        is_zip: Whether the dataset is a zip file
+        archive: What type of archive the dataset is
         url: URL to download the dataset from
     """
     # Create dataset directory and build full path
     dataset_path = os.path.join(download_dir, name)
     os.makedirs(dataset_path, exist_ok=True)
     
-    if is_zip:
+    if archive == 'zip' or archive == 'tar':
         # Handle zip file downloads
-        filepath = os.path.join(dataset_path, f'{name}.zip')
+        filepath = os.path.join(dataset_path, f'{name}.{archive}')
         
         # Download the zip file using requests
         print(f'Downloading {name} dataset to {filepath}...')
@@ -30,9 +31,13 @@ def get_dataset(name, download_dir, is_zip, url):
         del response
 
         # Extract the contents and clean up
-        print(f'Extracting zip file of {name} dataset...')
-        with zipfile.ZipFile(filepath, 'r') as zip_ref:
-            zip_ref.extractall(dataset_path)
+        print(f'Extracting {archive} file of {name} dataset...')
+        if archive == 'zip':
+            with zipfile.ZipFile(filepath, 'r') as zip_ref:
+                zip_ref.extractall(dataset_path)
+        elif archive == 'tar':
+            with tarfile.open(filepath, mode="r:*") as tf:
+                tf.extractall(dataset_path)
         os.remove(filepath)
     else:
         # For non-zip files, use wget to recursively download
