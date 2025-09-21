@@ -4,6 +4,8 @@ import actipy
 import pandas as pd
 from tqdm import tqdm
 import numpy as np
+from src.data_download.charite_unpack import unpack_charite
+
 
 def unpack_unlabelled_dataset(dataset_name, dataset_path):
     if dataset_name=='capture24':
@@ -82,7 +84,8 @@ def unpack_labelled_dataset(
 
     elif dataset_name == "newcastle":
         labels_data, motion_data = unpack_newcastle(dataset_path, label_dict)
-
+    elif dataset_name == "charite":
+        motion_data, _, labels_data, _ = unpack_charite(dataset_path)
     else:
         raise ValueError(f"Unknown dataset name: {dataset_name}")
 
