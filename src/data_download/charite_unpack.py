@@ -17,7 +17,8 @@ def unpack_charite(path):
     start_recordings = []
     end_recordings = []
     start_dates = []
-    for f in glob.glob(path + '/*.edf'):
+    for i, f in enumerate(glob.glob(path + '/*.edf')):
+        print(f'Processing file {f}, {i+1} of {len(glob.glob(path + "/*.edf"))}')
         motion_data, bpm_data, patient_code, start_recording, end_recording, start_date = get_edffile(f)
         if motion_data is None:
             continue
