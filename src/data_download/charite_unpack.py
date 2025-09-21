@@ -19,6 +19,8 @@ def unpack_charite(path):
     start_dates = []
     for f in glob.glob(path + '/*.edf'):
         motion_data, bpm_data, patient_code, start_recording, end_recording, start_date = get_edffile(f)
+        if motion_data is None:
+            continue
         motion_datas.append(motion_data)
         bpm_datas.append(bpm_data)
         patient_codes.append(patient_code)
@@ -151,34 +153,38 @@ def get_bpm_from_ecg(ecg, sr_ecg, segment_width):
 
 
 def get_edffile(edf_file):
-    segment_width_bpm = 20
-    raw = highlevel.read_edf(edf_file)
-    patient_code = raw[2]['patientcode']
-    # Getting to EDF time
-    startdate = raw[2]['startdate']
-    start_offset = raw[2]['annotations'][0]
-    end_offset = raw[2]['annotations'][1]
-    # Verify we have the record we want
-    if start_offset[2] == 'Licht aus' and end_offset[2] == 'Licht an' and start_offset[1] == -1:
-        print('Offsets seem fine')
-    else:
-        raise AssertionError
-    start_offset = timedelta(seconds=start_offset[0])
-    end_offset = timedelta(seconds=end_offset[0])
-    end_recording = startdate + end_offset
-    start_recording = startdate + start_offset
+    try:
+        segment_width_bpm = 20
+        raw = highlevel.read_edf(edf_file)
+        patient_code = raw[2]['patientcode']
+        # Getting to EDF time
+        startdate = raw[2]['startdate']
+        start_offset = raw[2]['annotations'][0]
+        end_offset = raw[2]['annotations'][1]
+        # Verify we have the record we want
+        if start_offset[2] == 'Licht aus' and end_offset[2] == 'Licht an' and start_offset[1] == -1:
+            print('Offsets seem fine')
+        else:
+            raise AssertionError
+        start_offset = timedelta(seconds=start_offset[0])
+        end_offset = timedelta(seconds=end_offset[0])
+        end_recording = startdate + end_offset
+        start_recording = startdate + start_offset
 
-    #
-    ecg, x, y, z, sr_ecg, sr_x, sr_y, sr_z = get_channels_from_somno_edf(raw)
-    bpm_array = get_bpm_from_ecg(ecg, sr_ecg, segment_width_bpm)
-    # Now we want to put times to all the arrays
+        #
+        ecg, x, y, z, sr_ecg, sr_x, sr_y, sr_z = get_channels_from_somno_edf(raw)
+        bpm_array = get_bpm_from_ecg(ecg, sr_ecg, segment_width_bpm)
+        # Now we want to put times to all the arrays
 
-    freq = int(1/sr_x*(10**9))
-    idx = pd.date_range(start=startdate, periods=len(x), freq=f'{freq}ns')
-    assert len(x) == len(y) == len(z) == len(idx)
-    acc_df = pd.DataFrame(data={'x': x, 'y':y, 'z':z, 'timestamp': idx})
-    acc_df['subject'] = patient_code
-    idx = pd.date_range(start=startdate, periods=len(bpm_array), freq=f'{segment_width_bpm}s')
-    bpm_df = pd.DataFrame(data={'timestamp':idx, 'bpm':bpm_array})
-    bpm_df['subject'] = patient_code
-    return acc_df, bpm_df, patient_code, start_recording, end_recording, startdate
+        freq = int(1/sr_x*(10**9))
+        idx = pd.date_range(start=startdate, periods=len(x), freq=f'{freq}ns')
+        assert len(x) == len(y) == len(z) == len(idx)
+        acc_df = pd.DataFrame(data={'x': x, 'y':y, 'z':z, 'timestamp': idx})
+        acc_df['subject'] = patient_code
+        idx = pd.date_range(start=startdate, periods=len(bpm_array), freq=f'{segment_width_bpm}s')
+        bpm_df = pd.DataFrame(data={'timestamp':idx, 'bpm':bpm_array})
+        bpm_df['subject'] = patient_code
+        return acc_df, bpm_df, patient_code, start_recording, end_recording, startdate
+    except Exception as e:
+        print(f'Error in file {edf_file}: {e}')
+        return None, None, None, None, None, None
