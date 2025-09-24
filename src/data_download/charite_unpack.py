@@ -34,6 +34,9 @@ def unpack_charite(path):
         zip_ref.extractall(slp_path)
     sleep = []
     for i, pc in enumerate(patient_codes):
+        if pc == 'SL002' or pc == 'SL098' or pc == 'SL100' or pc == 'SL145' or pc == 'SL193':
+            # .slp file is not in correct format
+            continue
         path = os.path.join(slp_path, pc + '.slp')
         if not os.path.exists(path):
             sleep.append(None)
@@ -57,8 +60,8 @@ def unpack_charite(path):
         # Only keep date, remove all hours etc.
         start_date = start_date.replace(hour=0, minute=0, second=0, microsecond=0)
         # Get only hour and smaller units
-        lights_on_psg = header['lights_on'].to_numpy()[0]
-        lights_off_psg = header['lights_off'].to_numpy()[0]
+        lights_on_psg = float(header['lights_on'].to_numpy()[0])
+        lights_off_psg = float(header['lights_off'].to_numpy()[0])
         # Convert to timedeltas
         lights_on_psg = timedelta(hours=lights_on_psg) + start_date
         lights_off_psg = timedelta(hours=lights_off_psg) + start_date
@@ -70,9 +73,9 @@ def unpack_charite(path):
             sleep.append(None)
             continue
         # Add timestamp column to the ss
-        psg_start = timedelta(hours=header['psg_start'].to_numpy()[0]) + start_date
-        psg_stop = timedelta(hours=header['psg_stop'].to_numpy()[0]) + start_date
-        idx = pd.date_range(start=psg_start, end=psg_stop, periods=ss.size)
+        psg_start = timedelta(hours=float(header['psg_start'].to_numpy()[0])) + start_date
+        psg_stop = timedelta(hours=float(header['psg_stop'].to_numpy()[0])) + start_date
+        idx = pd.date_range(start=psg_start, end=psg_stop, periods=ss['sleep_phase'].size)
         # Check if periods are roughly 30s long
         if (idx[1] - idx[0]).total_seconds() < 29 or (idx[1] - idx[0]).total_seconds() > 31:
             print(f'{pc} has sleep staging periods that are not 30s')
@@ -85,7 +88,7 @@ def unpack_charite(path):
             sleep.append(None)
         ### Now we have to update the timestamp column with the offset read
         print(header)
-        psg_offset = timedelta(hours=header['offset'].to_numpy()[0])
+        psg_offset = timedelta(hours=float(header['offset'].to_numpy()[0]))
         print(psg_offset)
         motion_datas[i]['timestamp'] = motion_datas[i]['timestamp'] + psg_offset
         bpm_datas[i]['timestamp'] = bpm_datas[i]['timestamp'] + psg_offset
