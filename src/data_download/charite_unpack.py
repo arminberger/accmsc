@@ -51,8 +51,8 @@ def unpack_charite(path):
         header_io.close()
         # Drop last element
         ss = ss.iloc[:-1]
-        ss.columns = ['sleep_phase']
-        ss['subject'] = pc
+        ss.columns = ["label"]
+        ss["subject"] = pc
         # Check that times are not too far off
         lights_off = start_recordings[i]
         lights_on = end_recordings[i]
@@ -75,7 +75,7 @@ def unpack_charite(path):
         # Add timestamp column to the ss
         psg_start = timedelta(hours=float(header['psg_start'].to_numpy()[0])) + start_date
         psg_stop = timedelta(hours=float(header['psg_stop'].to_numpy()[0])) + start_date
-        idx = pd.date_range(start=psg_start, end=psg_stop, periods=ss['sleep_phase'].size)
+        idx = pd.date_range(start=psg_start, end=psg_stop, periods=ss["label"].size)
         # Check if periods are roughly 30s long
         if (idx[1] - idx[0]).total_seconds() < 29 or (idx[1] - idx[0]).total_seconds() > 31:
             print(f'{pc} has sleep staging periods that are not 30s')
