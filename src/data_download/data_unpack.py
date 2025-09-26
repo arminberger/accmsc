@@ -85,7 +85,8 @@ def unpack_labelled_dataset(
     elif dataset_name == "newcastle":
         labels_data, motion_data = unpack_newcastle(dataset_path, label_dict)
     elif dataset_name == "charite":
-        motion_data, _, labels_data, _ = unpack_charite(dataset_path)
+        motion_data, _, labels_data, patient_codes = unpack_charite(dataset_path)
+        print(f"Kept {len(patient_codes)} subjects after unpacking Charité dataset: {patient_codes}")
     else:
         raise ValueError(f"Unknown dataset name: {dataset_name}")
 

@@ -82,6 +82,13 @@ def unpack_charite(path):
             sleep.append(None)
             continue
         ss['timestamp'] = idx
+        # Validate that sleep labels are restricted to stages 0-5
+        labels_numeric = pd.to_numeric(ss['label'], errors='coerce')
+        if labels_numeric.isna().any() or not labels_numeric.isin([0, 1, 2, 3, 4, 5]).all():
+            print(f'{pc} has invalid sleep stage labels; discarding subject.')
+            sleep.append(None)
+            continue
+        ss['label'] = labels_numeric.astype(int)
         if header['error_code'].to_numpy()[0] == 0:
             sleep.append(ss)
         else:
