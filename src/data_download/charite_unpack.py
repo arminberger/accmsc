@@ -126,13 +126,13 @@ def get_channels_from_somno_edf(somno):
             ecg = somno[0][i]
             sr_ecg = int(somno[1][i]['sample_frequency'])
         elif somno[1][i]['label'] == 'X':
-            x = somno[0][i]
+            x = somno[0][i] / 1000  # Convert to g
             sr_x = int(somno[1][i]['sample_frequency'])
         elif somno[1][i]['label'] == 'Y':
-            y = somno[0][i]
+            y = somno[0][i] / 1000  # Convert to g
             sr_y = int(somno[1][i]['sample_frequency'])
         elif somno[1][i]['label'] == 'Z':
-            z = somno[0][i]
+            z = somno[0][i] / 1000  # Convert to g
             sr_z = int(somno[1][i]['sample_frequency'])
     return np.array(ecg), np.array(x), np.array(y), np.array(z), sr_ecg, sr_x, sr_y, sr_z
 
