@@ -184,7 +184,7 @@ def load_preprocessed_dataset(
                 loaded_dataset_name = parameters[0]
                 loaded_sampling_rate = int(parameters[3])
                 loaded_low_pass_filter_freq = int(parameters[5])
-                loaded_id = int(parameters[7])
+                loaded_id = int(parameters[7]) if dataset_name != "charite" else int(parameters[7].replace("SL", ""))
                 win_len_s_pre = int(parameters[9])
                 normalize_data_pre = int(parameters[11])
                 normalize_data_pre = True if normalize_data_pre == 1 else False
