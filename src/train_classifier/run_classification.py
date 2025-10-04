@@ -76,10 +76,12 @@ def run_classification(
     classifier_is_lstm = classifier_cfg.is_lstm
     torch.manual_seed(seed)
     dataset_name = dataset_cfg.name
+    hr_input_size = getattr(classifier_cfg, "hr_input_size", 0)
     if not freeze_foundational_model and precompute_features:
         raise ValueError(
             "Cannot precompute features if foundational model is not frozen."
         )
+
     # check if dataset_name is list or not
     if not isinstance(dataset_name, list):
         dataset_name = [dataset_name]
@@ -102,6 +104,17 @@ def run_classification(
         return_filename=True,
         batch_norm_after_feature_extractor=batch_norm_after_feature_extractor,
     )
+    dataset_has_hr = getattr(dataset_cfg, "has_heart_rate", False)
+    if dataset_has_hr and not precompute_features:
+        raise ValueError(
+            "Dataset has heart rate but features are not precomputed. This is not supported."
+        )
+    hr_noise_std = getattr(dataset_cfg, "hr_noise_std", 0.0) if hr_input_size > 0 else 0.0
+    if hr_input_size > 0 and not dataset_has_hr:
+        raise ValueError(
+            "Classifier configuration expects heart rate input but dataset does not provide it."
+        )
+
     classifier_name = classifier_cfg.name
     pad_input = classifier_cfg.pad_input
     prev_window = math.ceil(classifier_cfg.prev_minutes * 60.0 / input_len_sec)
@@ -137,6 +150,9 @@ def run_classification(
         'Pad LSTM input with zeros': pad_input,
         'Burn in epochs': burn_in_epochs,
         'Feature extractor filename': feature_extractor_filename,
+        'hr_input_size': hr_input_size,
+        'hr_noise_std': hr_noise_std,
+        'dataset_has_hr': dataset_has_hr,
     })
     (
         my_model,
@@ -167,11 +183,7 @@ def run_classification(
     dataset_list = []
     subject_ids = []
     for name in dataset_name:
-        (
-            dataset_list_name,
-            labels_list_name,
-            subject_ids_name,
-        ) = make_dataset(
+        out = make_dataset(
             dataset_cfg=dataset_cfg,
             paths_cfg=paths_cfg,
             target_sampling_rate=sampling_rate,
@@ -180,12 +192,18 @@ def run_classification(
             win_len_s=input_len_sec,
             normalize_data=normalize_data,
         )
+        if dataset_has_hr:
+            dataset_list_name, labels_list_name, hr_list_name, subject_ids_name = out
+        else:
+            dataset_list_name, labels_list_name, subject_ids_name = out
+            hr_list_name = None
         dataset_list_name = [
             AccDataset(
                 motion_df=dataset_list_name[k],
                 label_df=labels_list_name[k],
                 samples_per_window=sampling_rate * input_len_sec,
                 label_transform=train_label_transform_dict,
+                heart_rate_df=hr_list_name[k] if dataset_has_hr else None,
             )
             for k in range(len(dataset_list_name))
         ]
@@ -200,6 +218,9 @@ def run_classification(
                 feature_extractor_output_length=feature_extractor_output_len,
                 acc_dataset=dataset_list[i],
                 device=device,
+                acc_ds_uses_hr=dataset_has_hr,
+                hr_noise_std=hr_noise_std,
+                noise_seed=seed
             )
             for i in range(len(dataset_list))
         ]

@@ -20,6 +20,7 @@ def make_dataset(
     dataset_sample_rate = dataset_cfg.sampling_rate
     cache_path = paths_cfg.processed_data
     label_dict = dataset_cfg.labels if dataset_cfg.has_labels else None
+    has_heart_rate = getattr(dataset_cfg, "has_heart_rate", False)
 
     if dataset_path is None:
         dataset_path = os.path.join(paths_cfg.datasets, dataset_cfg.unpacked_path)
@@ -30,6 +31,7 @@ def make_dataset(
             loaded_from_cache,
             motion_data_list,
             labels_list,
+            hr_data_list,
             subject_ids,
         ) = load_preprocessed_dataset(
             dataset_name,
@@ -39,6 +41,7 @@ def make_dataset(
             win_len_s,
             normalize_data,
             cache_path,
+            load_hr_data=has_heart_rate,
         )
 
     if loaded_from_cache:
@@ -47,13 +50,15 @@ def make_dataset(
         print("Dataset not loaded from cache")
 
     if loaded_from_cache and dataset_cfg.has_labels:
+        if has_heart_rate:
+            return motion_data_list, labels_list, hr_data_list, subject_ids
         return motion_data_list, labels_list, subject_ids
     elif loaded_from_cache and not dataset_cfg.has_labels:
         return motion_data_list, subject_ids
 
     if dataset_cfg.has_labels:
         # Load raw dataset
-        motion_data_list, labels_list, subject_ids = unpack_labelled_dataset(
+        motion_data_list, labels_list, subject_ids, hr_data_list = unpack_labelled_dataset(
             dataset_name,
             dataset_path,
             label_dict,
@@ -62,6 +67,7 @@ def make_dataset(
         # Load raw dataset
         motion_data_list, subject_ids = unpack_unlabelled_dataset(
             dataset_name, dataset_path)
+        hr_data_list = None
 
     for i in range(len(motion_data_list)):
         # Actipy requires that the DateTimeIndex has name 'time'
@@ -80,6 +86,10 @@ def make_dataset(
 
         if dataset_cfg.has_labels is True:
             motion_data_sample = process_labelled_data(labels_list[i], motion_data_sample, win_len_samples)
+        if has_heart_rate:
+            hr_data_sample = hr_data_list[i]
+            # Drop rows without heart rate data
+            motion_data_sample = drop_rows_without_label(motion_data_sample, hr_data_sample)
 
         motion_data_sample = process_motion_data(motion_data_sample, normalize_data, target_sampling_rate, value_clip=2,
                                                  win_len_s=win_len_s,
@@ -97,9 +107,12 @@ def make_dataset(
         win_len_s,
         normalize_data,
         cache_path,
+        hr_data_list=hr_data_list if has_heart_rate else None,
     )
 
     if dataset_cfg.has_labels:
+        if has_heart_rate:
+            return motion_data_list, labels_list, hr_data_list, subject_ids
         return motion_data_list, labels_list, subject_ids
     else:
         return motion_data_list, subject_ids
@@ -171,10 +184,18 @@ def has_good_label(window, labels):
     return True
 
 def load_preprocessed_dataset(
-        dataset_name, has_labels, low_pass_filter_freq, model_sampling_rate, win_len_s, normalize_data, cache_path
+        dataset_name,
+        has_labels,
+        low_pass_filter_freq,
+        model_sampling_rate,
+        win_len_s,
+        normalize_data,
+        cache_path,
+        load_hr_data=False,
 ):
     motion_data_list = []
     labels_list = []
+    hr_data_list = [] if load_hr_data else None
     loaded_from_cache = False
     for file in os.scandir(cache_path):
         if file.name.endswith("_preprocessed.csv"):
@@ -203,7 +224,8 @@ def load_preprocessed_dataset(
                 and normalize_data_pre == normalize_data
             ):
                 loaded_from_cache = True
-                if file.name.split("_")[1] == "motion":
+                file_type = file.name.split("_")[1]
+                if file_type == "motion":
                     data = pd.read_csv(
                         file.path,
                         parse_dates=["timestamp"],
@@ -213,7 +235,7 @@ def load_preprocessed_dataset(
                     data.set_index("timestamp", inplace=True)
                     motion_data_list.append(data)
 
-                if file.name.split("_")[1] == "labels":
+                if file_type == "labels":
                     data = pd.read_csv(
                         file.path,
                         parse_dates=["timestamp"],
@@ -224,18 +246,29 @@ def load_preprocessed_dataset(
                     data["subject"] = loaded_id
                     data.set_index("timestamp", inplace=True)
                     labels_list.append(data)
+                if load_hr_data and file_type == "hr":
+                    data = pd.read_csv(
+                        file.path,
+                        parse_dates=["timestamp"],
+                        dtype={"bpm": np.float32},
+                    )
+                    data["subject"] = loaded_id
+                    data.set_index("timestamp", inplace=True)
+                    hr_data_list.append(data)
     # Sort data according to subject id
     try:
         subject_ids = [motion_data_list[i]["subject"].iloc[0] for i in range(len(motion_data_list))]
         if has_labels:
-            make_1_to_1_corresp(motion_data_list, labels_list)
+            make_1_to_1_corresp(labels_list, motion_data_list, hr_data_list if load_hr_data else None)
         for i in range(len(motion_data_list)):
             motion_data_list[i] = motion_data_list[i].drop(columns=["subject"])
             if has_labels:
                 labels_list[i] = labels_list[i].drop(columns=["subject"])
+            if load_hr_data:
+                hr_data_list[i] = hr_data_list[i].drop(columns=["subject"])
     except:
-        return False, None, None, None
-    return loaded_from_cache, motion_data_list, labels_list, subject_ids
+        return False, None, None, None, None
+    return loaded_from_cache, motion_data_list, labels_list, hr_data_list, subject_ids
 
 def save_preprocessed_dataset(
         dataset_name,
@@ -247,6 +280,7 @@ def save_preprocessed_dataset(
         win_len_s,
         normalize,
         cache_path,
+        hr_data_list=None,
 ):
     for i in range(len(motion_data_list)):
         id_i = subject_ids[i]
@@ -273,6 +307,18 @@ def save_preprocessed_dataset(
                 index=False,
             )
             labels_list[i] = labels_list[i].drop(columns=["timestamp"])
+
+        if hr_data_list is not None:
+            hr_data_list[i]["timestamp"] = hr_data_list[i].index
+            hr_data_list[i].to_csv(
+                os.path.join(
+                    cache_path,
+                    f"{dataset_name}_hr_samplingrate_{str(model_sampling_rate)}_lowpass_{str(low_pass_filter_freq)}"
+                    f"_id_{str(id_i)}_wls_{str(win_len_s)}_norm_{str(int(normalize))}_preprocessed.csv",
+                ),
+                index=False,
+            )
+            hr_data_list[i] = hr_data_list[i].drop(columns=["timestamp"])
 
 def drop_rows_without_label(data_df: pd.DataFrame, label_df: pd.DataFrame):
     """

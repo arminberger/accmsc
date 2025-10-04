@@ -20,6 +20,8 @@ class AccDataset(Dataset):
         label_col="label",
         label_transform=None,
         channels_first=True,
+        heart_rate_df=None,
+        heart_rate_col="bpm",
     ):
         """
         Dataset for accelerometer data contiguously sampled at a fixed frequency.
@@ -37,12 +39,21 @@ class AccDataset(Dataset):
         assert is_datetime64_dtype(label_df.index)
         self.motion_df = motion_df
         self.label_df = label_df
+
+        self.heart_rate_df = heart_rate_df
+        self.heart_rate_col = heart_rate_col
+
         self.num_samples = samples_per_window
         self.motion_cols = motion_cols
         self.motion_chan = len(motion_cols)
         self.label_col = label_col
         self.label_transform = label_transform
         self.channels_first = channels_first
+
+        if heart_rate_df is not None:
+            assert is_datetime64_dtype(heart_rate_df.index)
+            assert heart_rate_col in heart_rate_df.columns
+
 
         self.length = math.floor(motion_df.shape[0] / samples_per_window)
     def __len__(self):
@@ -58,11 +69,21 @@ class AccDataset(Dataset):
             [data_timestamp], method="nearest"
         )[0]
         label = self.label_df[self.label_col].iloc[label_index]
+
+        if self.heart_rate_df is not None:
+            hr_index = self.heart_rate_df.index.get_indexer(
+                [data_timestamp], method="nearest"
+            )[0]
+            hr_value = self.heart_rate_df[self.heart_rate_col].iloc[hr_index]
+
         sample = sample[self.motion_cols].to_numpy(dtype=np.float32)
         if self.channels_first:
             sample = sample.T
         label = apply_label_transform(label, self.label_transform)
-        return torch.from_numpy(sample), torch.tensor(label, dtype=torch.long)
+        if self.heart_rate_df is not None:
+            return torch.from_numpy(sample), torch.tensor(label, dtype=torch.long), torch.tensor(hr_value, dtype=torch.float)
+        else:
+            return torch.from_numpy(sample), torch.tensor(label, dtype=torch.long)
 
 def apply_label_transform(label, label_transform):
     if isinstance(label_transform, Mapping):
