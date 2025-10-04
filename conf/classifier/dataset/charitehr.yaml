@@ -1,0 +1,16 @@
+name: charitehr
+unpacked_path: charite/Somno
+url: https://polybox.ethz.ch/index.php/s/2tjtpXi2rKRy6om/download
+archive: tar
+sampling_rate: 128
+has_labels: true
+has_heart_rate: true
+hr_noise_std: 0.0
+labels:
+  0: 0
+  1: 1
+  2: 2
+  3: 3
+  4: 4
+  5: 5
+sampling_period_ms: ${eval:'1000/${sampling_rate}'}

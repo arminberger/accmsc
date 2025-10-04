@@ -132,3 +132,53 @@ class LSTMModel(nn.Module):
         cell = torch.zeros(self.d_param * self.num_layers, batch_size, self.h_cell)
         cell = cell.to(self.device)
         return cell
+
+
+class LSTMWithHeartRateModel(LSTMModel):
+    def __init__(
+        self,
+        feature_input_size,
+        hr_input_size,
+        hr_projection_dim,
+        hidden_dim,
+        num_classes,
+        device,
+        num_channels=3,
+        feature_extractor=None,
+        use_all_hidden=False,
+        sequence_length=1,
+        bidireactional=False,
+        num_layers=1,
+        dropout=0.0,
+        proj_size=0,
+    ):
+        if hr_input_size <= 0:
+            raise ValueError("hr_input_size must be positive for LSTMWithHeartRateModel")
+        total_input_size = feature_input_size + hr_projection_dim
+        super().__init__(
+            input_size=total_input_size,
+            hidden_dim=hidden_dim,
+            num_classes=num_classes,
+            device=device,
+            num_channels=num_channels,
+            feature_extractor=feature_extractor,
+            use_all_hidden=use_all_hidden,
+            sequence_length=sequence_length,
+            bidireactional=bidireactional,
+            num_layers=num_layers,
+            dropout=dropout,
+            proj_size=proj_size,
+        )
+        self.feature_input_size = feature_input_size
+        self.hr_input_size = hr_input_size
+        self.hr_projection = nn.Sequential(
+            nn.Linear(hr_input_size, hr_projection_dim),
+            nn.ReLU(),
+        )
+
+    def forward(self, x, seq_lengths):
+        feature_part = x[:, :, : self.feature_input_size]
+        hr_part = x[:, :, self.feature_input_size : self.feature_input_size + self.hr_input_size]
+        hr_emb = self.hr_projection(hr_part)
+        combined = torch.cat([feature_part, hr_emb], dim=2)
+        return super().forward(combined, seq_lengths)

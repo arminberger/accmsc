@@ -20,6 +20,8 @@ class AccDataset(Dataset):
         label_col="label",
         label_transform=None,
         channels_first=True,
+        heart_rate_df=None,
+        heart_rate_col="bpm",
     ):
         """
         Dataset for accelerometer data contiguously sampled at a fixed frequency.
@@ -43,6 +45,15 @@ class AccDataset(Dataset):
         self.label_col = label_col
         self.label_transform = label_transform
         self.channels_first = channels_first
+        self.heart_rate_series = None
+        if heart_rate_df is not None and not heart_rate_df.empty:
+            if not is_datetime64_dtype(heart_rate_df.index):
+                raise ValueError("Heart rate dataframe index must be datetime64")
+            if heart_rate_col not in heart_rate_df.columns:
+                raise ValueError(f"Heart rate dataframe must contain column '{heart_rate_col}'")
+            heart_rate_series = heart_rate_df[heart_rate_col].astype(np.float32)
+            heart_rate_series = heart_rate_series[~heart_rate_series.index.duplicated(keep="first")]
+            self.heart_rate_series = heart_rate_series.sort_index()
 
         self.length = math.floor(motion_df.shape[0] / samples_per_window)
     def __len__(self):
@@ -62,6 +73,21 @@ class AccDataset(Dataset):
         if self.channels_first:
             sample = sample.T
         label = apply_label_transform(label, self.label_transform)
+
+        hr_tensor = None
+        if self.heart_rate_series is not None and len(self.heart_rate_series) > 0:
+            hr_index = self.heart_rate_series.index.get_indexer([data_timestamp], method="nearest")
+            if hr_index.size > 0 and hr_index[0] != -1:
+                hr_value = float(self.heart_rate_series.iloc[hr_index[0]])
+                hr_tensor = torch.tensor(hr_value, dtype=torch.float32)
+
+        if hr_tensor is not None:
+            return (
+                torch.from_numpy(sample),
+                torch.tensor(label, dtype=torch.long),
+                hr_tensor,
+            )
+
         return torch.from_numpy(sample), torch.tensor(label, dtype=torch.long)
 
 def apply_label_transform(label, label_transform):
