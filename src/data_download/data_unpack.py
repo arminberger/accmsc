@@ -94,7 +94,11 @@ def unpack_labelled_dataset(
     # Remove subject column
     subject_ids = []
     for i in range(len(motion_data)):
-        subject_ids.append(motion_data[i]["subject"].iloc[0])
+        subject_id = motion_data[i]["subject"].iloc[0]
+        if dataset_name == "charite" or dataset_name == "chartiehr":
+            # Convert the id to int
+            subject_id = int(subject_id.replace("SL", ""))
+        subject_ids.append(subject_id)
         motion_data[i].drop(columns=["subject"], inplace=True)
         labels_data[i].drop(columns=["subject"], inplace=True)
     return motion_data, labels_data, subject_ids
