@@ -1,7 +1,7 @@
 import os
 import re
 import torch
-from src.models import Resnet, RNNModel, LSTMModel, SimCLR
+from src.models import Resnet, RNNModel, LSTMModel, LSTMWithHeartRateModel, SimCLR
 from src.train_ssl import get_backbone_network
 from torch import nn
 import zipfile
@@ -62,6 +62,7 @@ def get_full_classification_model(
             device=device,
             dropout=dropout,
             clip_gradients=clip_gradients,
+            classifier_cfg=classifier_cfg,
         )
     else:
         my_model = get_classification_model(
@@ -74,6 +75,7 @@ def get_full_classification_model(
             device=device,
             dropout=dropout,
             clip_gradients=clip_gradients,
+            classifier_cfg=classifier_cfg,
         )
 
     # print(my_model)
@@ -106,6 +108,7 @@ def get_classification_model(
     feature_extractor=None,
     dropout=0,
     clip_gradients=False,
+    classifier_cfg=None,
 ):
     """
 
@@ -158,6 +161,25 @@ def get_classification_model(
         # LSTM Classifier
         model = LSTMModel(
             input_size=feature_ext_output_size,
+            hidden_dim=128,
+            num_classes=num_classes,
+            device=device,
+            feature_extractor=feature_extractor,
+            use_all_hidden=False,
+            bidireactional=False,
+            sequence_length=prev_window + post_window + 1,
+            dropout=dropout,
+            num_layers=2,
+        )
+    elif name == 'lstm_hr_classifier':
+        hr_input_size = getattr(classifier_cfg, "hr_input_size", 0) if classifier_cfg is not None else 0
+        if hr_input_size <= 0:
+            raise ValueError("hr_input_size must be positive for lstm_hr_classifier")
+        hr_projection_dim = getattr(classifier_cfg, "hr_projection_dim", hr_input_size) if classifier_cfg is not None else hr_input_size
+        model = LSTMWithHeartRateModel(
+            feature_input_size=feature_ext_output_size,
+            hr_input_size=hr_input_size,
+            hr_projection_dim=hr_projection_dim,
             hidden_dim=128,
             num_classes=num_classes,
             device=device,

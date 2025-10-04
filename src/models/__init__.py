@@ -1,6 +1,6 @@
 from .resnet import Resnet
 from .rnn import RNNModel
-from .lstm import LSTMModel
+from .lstm import LSTMModel, LSTMWithHeartRateModel
 from .resnet1d import ResNet1D
 from .simclr import SimCLR
 from .ntxent_loss import NTXentLossNew

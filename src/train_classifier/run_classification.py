@@ -76,6 +76,7 @@ def run_classification(
     classifier_is_lstm = classifier_cfg.is_lstm
     torch.manual_seed(seed)
     dataset_name = dataset_cfg.name
+    hr_input_size = getattr(classifier_cfg, "hr_input_size", 0)
     if not freeze_foundational_model and precompute_features:
         raise ValueError(
             "Cannot precompute features if foundational model is not frozen."
@@ -102,6 +103,14 @@ def run_classification(
         return_filename=True,
         batch_norm_after_feature_extractor=batch_norm_after_feature_extractor,
     )
+    dataset_has_hr = getattr(dataset_cfg, "has_heart_rate", False)
+    hr_noise_std = getattr(dataset_cfg, "hr_noise_std", 0.0) if hr_input_size > 0 else 0.0
+    if hr_input_size > 0 and not dataset_has_hr:
+        raise ValueError(
+            "Classifier configuration expects heart rate input but dataset does not provide it."
+        )
+    if hr_input_size <= 0:
+        hr_noise_std = 0.0
     classifier_name = classifier_cfg.name
     pad_input = classifier_cfg.pad_input
     prev_window = math.ceil(classifier_cfg.prev_minutes * 60.0 / input_len_sec)
@@ -137,6 +146,9 @@ def run_classification(
         'Pad LSTM input with zeros': pad_input,
         'Burn in epochs': burn_in_epochs,
         'Feature extractor filename': feature_extractor_filename,
+        'hr_input_size': hr_input_size,
+        'hr_noise_std': hr_noise_std,
+        'dataset_has_hr': dataset_has_hr,
     })
     (
         my_model,
@@ -166,12 +178,8 @@ def run_classification(
     # Load data: First preprocess the data and get list of per-subject dataframes, then
     dataset_list = []
     subject_ids = []
-    for name in dataset_name:
-        (
-            dataset_list_name,
-            labels_list_name,
-            subject_ids_name,
-        ) = make_dataset(
+    for _ in dataset_name:
+        result = make_dataset(
             dataset_cfg=dataset_cfg,
             paths_cfg=paths_cfg,
             target_sampling_rate=sampling_rate,
@@ -180,18 +188,28 @@ def run_classification(
             win_len_s=input_len_sec,
             normalize_data=normalize_data,
         )
-        dataset_list_name = [
-            AccDataset(
-                motion_df=dataset_list_name[k],
-                label_df=labels_list_name[k],
-                samples_per_window=sampling_rate * input_len_sec,
-                label_transform=train_label_transform_dict,
-            )
-            for k in range(len(dataset_list_name))
-        ]
+        if dataset_has_hr:
+            motion_frames, label_frames, hr_frames, subject_ids_name = result
+        else:
+            motion_frames, label_frames, subject_ids_name = result
+            hr_frames = [None for _ in range(len(motion_frames))]
 
-        dataset_list.extend(dataset_list_name)
+        for motion_df, label_df, hr_df in zip(motion_frames, label_frames, hr_frames):
+            dataset_list.append(
+                AccDataset(
+                    motion_df=motion_df,
+                    label_df=label_df,
+                    samples_per_window=sampling_rate * input_len_sec,
+                    label_transform=train_label_transform_dict,
+                    heart_rate_df=hr_df if dataset_has_hr else None,
+                )
+            )
         subject_ids.extend(subject_ids_name)
+
+    if hr_input_size > 0 and not precompute_features:
+        raise ValueError(
+            "Heart rate augmented LSTM currently requires precomputed features."
+        )
 
     if precompute_features:
         dataset_list = [
@@ -200,6 +218,8 @@ def run_classification(
                 feature_extractor_output_length=feature_extractor_output_len,
                 acc_dataset=dataset_list[i],
                 device=device,
+                hr_noise_std=hr_noise_std,
+                noise_seed=seed + i if hr_noise_std > 0 else None,
             )
             for i in range(len(dataset_list))
         ]

@@ -76,6 +76,7 @@ def unpack_labelled_dataset(
     """
 
 
+    hr_data = None
     if dataset_name == "applewatch":
         labels_data, motion_data = unpack_applewatch(dataset_path)
 
@@ -87,21 +88,26 @@ def unpack_labelled_dataset(
     elif dataset_name == "charite":
         motion_data, _, labels_data, patient_codes = unpack_charite(dataset_path)
         print(f"Kept {len(patient_codes)} subjects after unpacking Charité dataset: {patient_codes}")
+    elif dataset_name == "charitehr":
+        motion_data, hr_data, labels_data, patient_codes = unpack_charite(dataset_path)
+        print(f"Kept {len(patient_codes)} subjects after unpacking Charité HR dataset: {patient_codes}")
     else:
         raise ValueError(f"Unknown dataset name: {dataset_name}")
 
-    make_1_to_1_corresp(labels_data, motion_data)
+    make_1_to_1_corresp(labels_data, motion_data, hr_data)
     # Remove subject column
     subject_ids = []
     for i in range(len(motion_data)):
         subject_id = motion_data[i]["subject"].iloc[0]
-        if dataset_name == "charite" or dataset_name == "chartiehr":
+        if dataset_name == "charite" or dataset_name == "charitehr":
             # Convert the id to int
             subject_id = int(subject_id.replace("SL", ""))
         subject_ids.append(subject_id)
         motion_data[i].drop(columns=["subject"], inplace=True)
         labels_data[i].drop(columns=["subject"], inplace=True)
-    return motion_data, labels_data, subject_ids
+        if hr_data is not None:
+            hr_data[i].drop(columns=["subject"], inplace=True)
+    return motion_data, labels_data, subject_ids, hr_data
 
 
 def unpack_newcastle(dataset_path, label_dict):
@@ -420,7 +426,7 @@ def unpack_applewatch(dataset_path):
     return labels_data, motion_data
 
 
-def make_1_to_1_corresp(labels_data, motion_data):
+def make_1_to_1_corresp(labels_data, motion_data, hr_data=None):
     """
     Ensures that the labels and motion data are in the same order and that there is a 1 to 1 correspondence between
     them.
@@ -434,8 +440,12 @@ def make_1_to_1_corresp(labels_data, motion_data):
     # Sort motion data and labels by ID
     motion_data.sort(key=lambda x: x["subject"].iloc[0])
     labels_data.sort(key=lambda x: x["subject"].iloc[0])
+    if hr_data is not None:
+        hr_data.sort(key=lambda x: x["subject"].iloc[0])
     # Ensure that motion data and labels have the same length and that the IDs match
     assert len(motion_data) == len(labels_data)
     for i in range(len(motion_data)):
         assert motion_data[i]["subject"].iloc[0] == labels_data[i]["subject"].iloc[0]
+        if hr_data is not None:
+            assert motion_data[i]["subject"].iloc[0] == hr_data[i]["subject"].iloc[0]
         print(motion_data[i]["subject"].iloc[0])
