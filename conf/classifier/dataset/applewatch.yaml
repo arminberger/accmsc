@@ -14,3 +14,4 @@ labels:
   4: 4
   5: 5
 sampling_period_ms: ${eval:'1000/${sampling_rate}'}
+use_percent: 100
