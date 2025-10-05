@@ -109,6 +109,17 @@ def make_dataset(
         cache_path,
         hr_data_list=hr_data_list if has_heart_rate else None,
     )
+    if hasattr(dataset_cfg, "use_percent") and dataset_cfg.use_percent < 100:
+        num_subjects = int(len(motion_data_list) * dataset_cfg.use_percent / 100)
+        # Generate random indices
+        rng = np.random.default_rng(seed=42)
+        indices = rng.choice(len(motion_data_list), size=num_subjects, replace=False)
+        motion_data_list = [motion_data_list[i] for i in indices]
+        subject_ids = [subject_ids[i] for i in indices]
+        if dataset_cfg.has_labels:
+            labels_list = [labels_list[i] for i in indices]
+            if has_heart_rate:
+                hr_data_list = [hr_data_list[i] for i in indices]
 
     if dataset_cfg.has_labels:
         if has_heart_rate:

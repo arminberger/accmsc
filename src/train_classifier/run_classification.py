@@ -153,6 +153,7 @@ def run_classification(
         'hr_input_size': hr_input_size,
         'hr_noise_std': hr_noise_std,
         'dataset_has_hr': dataset_has_hr,
+        'use_percent': dataset_cfg.use_percent if hasattr(dataset_cfg, "use_percent") else 1,
     })
     (
         my_model,
