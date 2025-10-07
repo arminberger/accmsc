@@ -125,7 +125,7 @@ def run_classification(
             "post_window should always be 0 since it is not supported anymore"
         )
 
-    wandb_run = wandb.init(project=f'Charite With Heart Rate', config={
+    wandb_run = wandb.init(project=f'Charite HR Std Ablation Study', config={
         'feature_extractor_name': feature_extractor_name,
         'classifier_name': classifier_name,
         'dataset_name': dataset_name,
